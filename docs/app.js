@@ -59,7 +59,7 @@ document.getElementById("udiForm").addEventListener("submit", async (e) => {
   };
 
   const response = await fetch(
-    "https://api.github.com/repos/<ORG>/gtin/actions/workflows/generate-udi.yml/dispatches",
+    "https://api.github.com/repos/kleinmed-ag/gtin/actions/workflows/generate-udi.yml/dispatches",
     {
       method: "POST",
       headers: {
