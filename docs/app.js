@@ -17,7 +17,6 @@ async function loadProducts() {
 
     const productSelect = document.getElementById("product");
 
-    // Fill dropdown
     products.forEach(p => {
       const opt = document.createElement("option");
       opt.value = p.name;
@@ -25,7 +24,6 @@ async function loadProducts() {
       productSelect.appendChild(opt);
     });
 
-    // Prefill serial number
     function updateSerial() {
       const p = products.find(x => x.name === productSelect.value);
       document.getElementById("serialStart").value = (p.last_serial || 0) + 1;
@@ -43,18 +41,13 @@ async function loadProducts() {
 document.getElementById("udiForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const product = document.getElementById("product").value;
-  const date = document.getElementById("date").value;
-  const serialStart = document.getElementById("serialStart").value;
-  const count = document.getElementById("count").value;
-
   const payload = {
     ref: "main",
     inputs: {
-      product,
-      date,
-      serial_start: serialStart,
-      count
+      product: document.getElementById("product").value,
+      date: document.getElementById("date").value,
+      serial_start: document.getElementById("serialStart").value,
+      count: document.getElementById("count").value
     }
   };
 
@@ -70,11 +63,7 @@ document.getElementById("udiForm").addEventListener("submit", async (e) => {
     }
   );
 
-  if (response.ok) {
-    document.getElementById("output").textContent =
-      "UDI Erzeugung gestartet! GitHub Action läuft.";
-  } else {
-    document.getElementById("output").textContent =
-      "Fehler: " + response.status + " " + response.statusText;
-  }
+  document.getElementById("output").textContent = response.ok
+    ? "UDI Erzeugung gestartet! GitHub Action läuft."
+    : `Fehler: ${response.status} ${response.statusText}`;
 });
