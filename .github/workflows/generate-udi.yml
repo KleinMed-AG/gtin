@@ -1,44 +1,17 @@
-
 name: Generate UDI Labels
 
 on:
-  push:
-    paths:
-      - "jobs/udi/*.yaml"
-
-permissions:
-  contents: write
-
-jobs:
-  build-udi:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          pip install qrcode reportlab pillow pyyaml
-
-      - name: Run UDI generator
-        run: python scripts/generate_udi.py
-
-      - name: Commit generated outputs
-        run: |
-          git config --local user.email "automation@github.com"
-          git config --local user.name "GitHub Action"
-          git add output/*
-          git commit -m "Generated UDI labels from job file" || echo "No changes"
-          git push
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: udi-labels
-          path: output/
+  workflow_dispatch:
+    inputs:
+      product:
+        description: "Produktname"
+        required: true
+      date:
+        description: "Herstelldatum (YYMMDD)"
+        required: true
+      serial_start:
+        description: "Start Seriennummer"
+        required: true
+      count:
+        description: "Anzahl Etiketten"
+        required: true
