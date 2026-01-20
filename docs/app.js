@@ -32,7 +32,7 @@ async function loadProducts() {
     }
 
     productSelect.addEventListener("change", updateSerial);
-    updateSerial(); // initial fill
+    updateSerial();
 
   } catch (err) {
     console.error(err);
@@ -51,10 +51,10 @@ document.getElementById("udiForm").addEventListener("submit", async (e) => {
   const payload = {
     ref: "main",
     inputs: {
-      product: product,
-      date: date,
+      product,
+      date,
       serial_start: serialStart,
-      count: count
+      count
     }
   };
 
@@ -72,9 +72,9 @@ document.getElementById("udiForm").addEventListener("submit", async (e) => {
 
   if (response.ok) {
     document.getElementById("output").textContent =
-      "UDI Erzeugung gestartet! Gehe zu GitHub → Actions, um den Fortschritt zu sehen.";
+      "UDI Erzeugung gestartet! GitHub Action läuft.";
   } else {
     document.getElementById("output").textContent =
-      "Fehler beim Starten der GitHub Action: " + response.status + " " + response.statusText;
+      "Fehler: " + response.status + " " + response.statusText;
   }
 });
