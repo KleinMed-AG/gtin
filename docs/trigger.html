@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<script>
+(async () => {
+  const payload = JSON.parse(localStorage.getItem("udi_payload"));
+
+  const resp = await fetch(
+    "https://api.github.com/repos/kleinmed-ag/gtin/dispatches",
+    {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        event_type: "generate-udi",
+        client_payload: payload
+      })
+    }
+  );
+
+  document.body.textContent = resp.ok
+    ? "UDI Job erfolgreich gestartet."
+    : "Fehler beim Starten des UDI Jobs.";
+})();
+</script>
