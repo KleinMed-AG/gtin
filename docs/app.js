@@ -63,7 +63,21 @@ document.getElementById("udiForm").addEventListener("submit", async (e) => {
     }
   );
 
-  document.getElementById("output").textContent = response.ok
-    ? "UDI Erzeugung gestartet! GitHub Action läuft."
-    : `Fehler: ${response.status} ${response.statusText}`;
+document.getElementById("udiForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const payload = {
+    product: document.getElementById("product").value,
+    date: document.getElementById("date").value,
+    serial_start: document.getElementById("serialStart").value,
+    count: document.getElementById("count").value
+  };
+
+  localStorage.setItem("udi_payload", JSON.stringify(payload));
+
+  window.open("trigger.html", "_blank");
+
+  document.getElementById("output").textContent =
+    "UDI Job gestartet. GitHub Action läuft.";
 });
+
