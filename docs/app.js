@@ -1,24 +1,23 @@
-
-const productDbUrl = "data/product_db.json";
-
-
+document.addEventListener("DOMContentLoaded", loadProducts);
 
 async function loadProducts() {
-  const output = document.getElementById("output");
   try {
-    // fetch from inside docs
     const resp = await fetch("./data/product_db.json", { cache: "no-store" });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} while fetching product DB`);
-    const db = await resp.json();
 
-    const products = db.products || [];
-    if (!Array.isArray(products) || products.length === 0) {
-      throw new Error("Keine Produkte gefunden (leere products-Liste).");
+    if (!resp.ok) {
+      throw new Error("Fehler beim Laden der Produktdaten: HTTP " + resp.status);
+    }
+
+    const db = await resp.json();
+    const products = db.products;
+
+    if (!products || products.length === 0) {
+      throw new Error("Keine Produkte in product_db.json gefunden.");
     }
 
     const productSelect = document.getElementById("product");
 
-    // fill the dropdown
+    // Fill dropdown
     products.forEach(p => {
       const opt = document.createElement("option");
       opt.value = p.name;
@@ -26,29 +25,20 @@ async function loadProducts() {
       productSelect.appendChild(opt);
     });
 
-    // helper to prefill serial = last_serial + 1
-    function prefillSerial() {
-      const selected = products.find(p => p.name === productSelect.value);
-      if (!selected) return;
-      const nextSerial = (parseInt(selected.last_serial, 10) || 0) + 1;
-      document.getElementById("serialStart").value = nextSerial;
+    // Prefill serial number
+    function updateSerial() {
+      const p = products.find(x => x.name === productSelect.value);
+      document.getElementById("serialStart").value = (p.last_serial || 0) + 1;
     }
 
-    productSelect.addEventListener("change", prefillSerial);
-    prefillSerial(); // initial prefill
+    productSelect.addEventListener("change", updateSerial);
+    updateSerial(); // initial fill
 
-    // (Optional) default date format = YYMMDD, user enters 6 digits
-    const dateInput = document.getElementById("date");
-    dateInput.placeholder = "YYMMDD"; // 6 digits as you requested
   } catch (err) {
     console.error(err);
-    output.textContent = "Fehler beim Laden der Produktdaten: " + err.message;
+    document.getElementById("output").textContent = err.message;
   }
 }
-
-document.addEventListener("DOMContentLoaded", loadProducts);
-
-
 
 document.getElementById("udiForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -58,25 +48,33 @@ document.getElementById("udiForm").addEventListener("submit", async (e) => {
   const serialStart = document.getElementById("serialStart").value;
   const count = document.getElementById("count").value;
 
-  const yaml = `
-product: "${product}"
-date: "${date}"
-serial_start: ${serialStart}
-count: ${count}
-operator: "GitHub Pages UI"
-`;
+  const payload = {
+    ref: "main",
+    inputs: {
+      product: product,
+      date: date,
+      serial_start: serialStart,
+      count: count
+    }
+  };
 
-  document.getElementById("output").textContent = yaml;
+  const response = await fetch(
+    "https://api.github.com/repos/<ORG>/gtin/actions/workflows/generate-udi.yml/dispatches",
+    {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    }
+  );
 
-  const filename = `jobs/udi/job-${Date.now()}.yaml`;
-
-  await fetch(filename, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "text/plain",
-    },
-    body: yaml,
-  });
-
-  alert("UDI Job erstellt! GitHub Actions startet jetzt automatisch.");
+  if (response.ok) {
+    document.getElementById("output").textContent =
+      "UDI Erzeugung gestartet! Gehe zu GitHub → Actions, um den Fortschritt zu sehen.";
+  } else {
+    document.getElementById("output").textContent =
+      "Fehler beim Starten der GitHub Action: " + response.status + " " + response.statusText;
+  }
 });
