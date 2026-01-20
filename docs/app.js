@@ -3,32 +3,13 @@ const productDbUrl = "../data/product_db.yaml";
 
 
 async function loadProducts() {
-  const resp = await fetch("../data/product_db.yaml");
-  const text = await resp.text();
-
-  // YAML parsen
-  const lines = text.split("\n");
+  const resp = await fetch("../data/product_db.json");
+  const db = await resp.json();
+  const products = db.products;
 
   const productSelect = document.getElementById("product");
 
-  let currentProduct = null;
-  let products = [];
-
-  for (let line of lines) {
-    if (line.startsWith("  - name:")) {
-      if (currentProduct) products.push(currentProduct);
-      currentProduct = { name: line.split(":")[1].trim().replace(/"/g, "") };
-    }
-    if (line.includes("gtin:")) {
-      currentProduct.gtin = line.split(":")[1].trim().replace(/"/g, "");
-    }
-    if (line.includes("last_serial:")) {
-      currentProduct.last_serial = parseInt(line.split(":")[1].trim());
-    }
-  }
-  if (currentProduct) products.push(currentProduct);
-
-  // Select befüllen
+  // Dropdown füllen
   products.forEach(p => {
     const opt = document.createElement("option");
     opt.value = p.name;
@@ -36,19 +17,20 @@ async function loadProducts() {
     productSelect.appendChild(opt);
   });
 
-  // Auto-Start-SN
-  productSelect.addEventListener("change", () => {
-    const sel = products.find(p => p.name === productSelect.value);
-    document.getElementById("serialStart").value = sel.last_serial + 1;
-  });
+  // Auto Seriennummer +1
+  function updateSerial() {
+    const selected = products.find(p => p.name === productSelect.value);
+    document.getElementById("serialStart").value = selected.last_serial + 1;
+  }
 
-  // Default: erstes Produkt auswählen
-  const first = products[0];
-  productSelect.value = first.name;
-  document.getElementById("serialStart").value = first.last_serial + 1;
+  productSelect.addEventListener("change", updateSerial);
+
+  // initial
+  updateSerial();
 }
 
 loadProducts();
+
 
 document.getElementById("udiForm").addEventListener("submit", async (e) => {
   e.preventDefault();
