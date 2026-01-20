@@ -1,0 +1,20 @@
+name: Trigger UDI via Browser
+
+on:
+  repository_dispatch:
+    types: [generate-udi]
+
+jobs:
+  forward:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger actual UDI workflow
+        uses: peter-evans/workflow-dispatch@v1
+        with:
+          workflow: generate-udi.yml
+          ref: main
+          inputs: |
+            product: "${{ github.event.client_payload.product }}"
+            date: "${{ github.event.client_payload.date }}"
+            serial_start: "${{ github.event.client_payload.serial_start }}"
+            count: "${{ github.event.client_payload.count }}"
