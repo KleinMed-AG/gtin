@@ -1,10 +1,6 @@
-
-import yaml
-
-def load_product_data(product_name):
-    db = yaml.safe_load(open("data/product_db.yaml"))
-    return next(p for p in db["products"] if p["name"] == product_name)
-
-def make_udi(gtin, date, sn):
-    return f"(01){gtin}(11){date}(21){sn}"
-``
+products:
+  - name: "Biorelax Schlafmatte"
+    gtin: "7649995659102"
+    last_serial: 8110007104   # basiert auf letzter Seriennummer im Spreadsheet
+    description: "Linderung nozizeptiver & neuropathischer Schmerzen"
+    group: "Medizinprodukte"
