@@ -15,3 +15,45 @@ on:
       count:
         description: "Anzahl Etiketten"
         required: true
+
+jobs:
+  generate-udi:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install qrcode reportlab pillow
+
+      - name: Run UDI generator
+        env:
+          INPUT_PRODUCT: ${{ github.event.inputs.product }}
+          INPUT_DATE: ${{ github.event.inputs.date }}
+          INPUT_SERIAL_START: ${{ github.event.inputs.serial_start }}
+          INPUT_COUNT: ${{ github.event.inputs.count }}
+        run: |
+          python scripts/generate_udi.py
+
+      - name: Upload generated PDFs and QR codes
+        uses: actions/upload-artifact@v4
+        with:
+          name: UDI-Labels
+          path: output/
+
+      # OPTIONAL: If you want output committed back into the repo, un-comment:
+      #
+      # - name: Commit updated outputs
+      #   run: |
+      #     git config --local user.email "github-actions@github.com"
+      #     git config --local user.name "GitHub Actions"
+      #     git add output/*
+      #     git commit -m "Added generated UDI labels" || echo "Nothing to commit"
+      #     git push
