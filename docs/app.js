@@ -1,20 +1,53 @@
 
 const productDbUrl = "../data/product_db.yaml";
 
+
 async function loadProducts() {
-  const resp = await fetch(productDbUrl);
+  const resp = await fetch("../data/product_db.yaml");
   const text = await resp.text();
-  const lines = text.split("\n").filter(l => l.trim().startsWith("name:"));
-  
-  const select = document.getElementById("product");
-  lines.forEach(l => {
-    const name = l.replace("name:","").trim();
+
+  // YAML parsen
+  const lines = text.split("\n");
+
+  const productSelect = document.getElementById("product");
+
+  let currentProduct = null;
+  let products = [];
+
+  for (let line of lines) {
+    if (line.startsWith("  - name:")) {
+      if (currentProduct) products.push(currentProduct);
+      currentProduct = { name: line.split(":")[1].trim().replace(/"/g, "") };
+    }
+    if (line.includes("gtin:")) {
+      currentProduct.gtin = line.split(":")[1].trim().replace(/"/g, "");
+    }
+    if (line.includes("last_serial:")) {
+      currentProduct.last_serial = parseInt(line.split(":")[1].trim());
+    }
+  }
+  if (currentProduct) products.push(currentProduct);
+
+  // Select befüllen
+  products.forEach(p => {
     const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    select.appendChild(opt);
+    opt.value = p.name;
+    opt.textContent = p.name;
+    productSelect.appendChild(opt);
   });
+
+  // Auto-Start-SN
+  productSelect.addEventListener("change", () => {
+    const sel = products.find(p => p.name === productSelect.value);
+    document.getElementById("serialStart").value = sel.last_serial + 1;
+  });
+
+  // Default: erstes Produkt auswählen
+  const first = products[0];
+  productSelect.value = first.name;
+  document.getElementById("serialStart").value = first.last_serial + 1;
 }
+
 loadProducts();
 
 document.getElementById("udiForm").addEventListener("submit", async (e) => {
