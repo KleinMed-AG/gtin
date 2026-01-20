@@ -1,5 +1,5 @@
 
-const productDbUrl = "../data/product_db.json";
+const productDbUrl = "data/product_db.json";
 
 
 async function loadProducts() {
