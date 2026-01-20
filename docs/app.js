@@ -2,34 +2,52 @@
 const productDbUrl = "data/product_db.json";
 
 
+
 async function loadProducts() {
-  const resp = await fetch("../data/product_db.json");
-  const db = await resp.json();
-  const products = db.products;
+  const output = document.getElementById("output");
+  try {
+    // fetch from inside docs
+    const resp = await fetch("./data/product_db.json", { cache: "no-store" });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} while fetching product DB`);
+    const db = await resp.json();
 
-  const productSelect = document.getElementById("product");
+    const products = db.products || [];
+    if (!Array.isArray(products) || products.length === 0) {
+      throw new Error("Keine Produkte gefunden (leere products-Liste).");
+    }
 
-  // Dropdown füllen
-  products.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.name;
-    opt.textContent = p.name;
-    productSelect.appendChild(opt);
-  });
+    const productSelect = document.getElementById("product");
 
-  // Auto Seriennummer +1
-  function updateSerial() {
-    const selected = products.find(p => p.name === productSelect.value);
-    document.getElementById("serialStart").value = selected.last_serial + 1;
+    // fill the dropdown
+    products.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.name;
+      opt.textContent = p.name;
+      productSelect.appendChild(opt);
+    });
+
+    // helper to prefill serial = last_serial + 1
+    function prefillSerial() {
+      const selected = products.find(p => p.name === productSelect.value);
+      if (!selected) return;
+      const nextSerial = (parseInt(selected.last_serial, 10) || 0) + 1;
+      document.getElementById("serialStart").value = nextSerial;
+    }
+
+    productSelect.addEventListener("change", prefillSerial);
+    prefillSerial(); // initial prefill
+
+    // (Optional) default date format = YYMMDD, user enters 6 digits
+    const dateInput = document.getElementById("date");
+    dateInput.placeholder = "YYMMDD"; // 6 digits as you requested
+  } catch (err) {
+    console.error(err);
+    output.textContent = "Fehler beim Laden der Produktdaten: " + err.message;
   }
-
-  productSelect.addEventListener("change", updateSerial);
-
-  // initial
-  updateSerial();
 }
 
-loadProducts();
+document.addEventListener("DOMContentLoaded", loadProducts);
+
 
 
 document.getElementById("udiForm").addEventListener("submit", async (e) => {
