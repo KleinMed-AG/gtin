@@ -38,31 +38,6 @@ async function loadProducts() {
   }
 }
 
-document.getElementById("udiForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const payload = {
-    ref: "main",
-    inputs: {
-      product: document.getElementById("product").value,
-      date: document.getElementById("date").value,
-      serial_start: document.getElementById("serialStart").value,
-      count: document.getElementById("count").value
-    }
-  };
-
-  const response = await fetch(
-    "https://api.github.com/repos/kleinmed-ag/gtin/actions/workflows/generate-udi.yml/dispatches",
-    {
-      method: "POST",
-      headers: {
-        "Accept": "application/vnd.github+json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    }
-  );
-
 document.getElementById("udiForm").addEventListener("submit", (e) => {
   e.preventDefault();
 
@@ -81,3 +56,19 @@ document.getElementById("udiForm").addEventListener("submit", (e) => {
     "UDI Job gestartet. GitHub Action läuft.";
 });
 
+  const response = await fetch(
+    "https://api.github.com/repos/kleinmed-ag/gtin/actions/workflows/generate-udi.yml/dispatches",
+    {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    }
+  );
+
+  document.getElementById("output").textContent = response.ok
+    ? "UDI Erzeugung gestartet! GitHub Action läuft."
+    : `Fehler: ${response.status} ${response.statusText}`;
+});
