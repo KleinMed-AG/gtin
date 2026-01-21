@@ -43,7 +43,7 @@ async function loadProducts() {
   }
 }
 
-async function handleSubmit(e) {
+/*async function handleSubmit(e) {
   e.preventDefault();
 
   const payload = {
@@ -69,4 +69,37 @@ async function handleSubmit(e) {
     document.getElementById("output").textContent =
       "Netzwerkfehler beim Starten des UDI Jobs.";
   }
+}*/
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  const payload = {
+    product: document.getElementById("product").value,
+    date: document.getElementById("date").value,
+    serial_start: document.getElementById("serialStart").value,
+    count: document.getElementById("count").value
+  };
+
+  try {
+    const resp = await fetch(
+      "https://calm-sherbet-3c6858.netlify.app/.netlify/functions/trigger-udi",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const text = await resp.text();
+
+    document.getElementById("output").textContent =
+      resp.ok
+        ? "UDI Job gestartet. GitHub Action läuft."
+        : `Fehler (${resp.status}): ${text}`;
+
+  } catch (err) {
+    document.getElementById("output").textContent =
+      "Netzwerkfehler: " + err.message;
+  }
 }
+
