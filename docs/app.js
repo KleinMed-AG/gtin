@@ -38,7 +38,7 @@ async function loadProducts() {
   }
 }
 
-document.getElementById("udiForm").addEventListener("submit", (e) => {
+document.getElementById("udiForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const payload = {
@@ -48,25 +48,16 @@ document.getElementById("udiForm").addEventListener("submit", (e) => {
     count: document.getElementById("count").value
   };
 
-  localStorage.setItem("udi_payload", JSON.stringify(payload));
+  const resp = await fetch("/.netlify/functions/trigger-udi", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 
-  window.open("trigger.html", "_blank");
-
-  document.getElementById("output").textContent =
-    "UDI Job gestartet. GitHub Action läuft.";
+  document.getElementById("output").textContent = resp.ok
+    ? "UDI Job gestartet."
+    : "Fehler beim Starten des UDI Jobs.";
 });
-
-  const response = await fetch(
-    "https://api.github.com/repos/kleinmed-ag/gtin/actions/workflows/generate-udi.yml/dispatches",
-    {
-      method: "POST",
-      headers: {
-        "Accept": "application/vnd.github+json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    }
-  );
 
   document.getElementById("output").textContent = response.ok
     ? "UDI Erzeugung gestartet! GitHub Action läuft."
