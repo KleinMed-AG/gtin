@@ -54,7 +54,7 @@ async function handleSubmit(e) {
   };
 
   try {
-    const resp = await fetch("/.netlify/functions/trigger-udi", {
+    const resp = await fetch("https://calm-sherbet-3c6858.netlify.app/.netlify/functions/trigger-udi", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
