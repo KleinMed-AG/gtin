@@ -1,4 +1,9 @@
-document.addEventListener("DOMContentLoaded", loadProducts);
+document.addEventListener("DOMContentLoaded", () => {
+  loadProducts();
+
+  const form = document.getElementById("udiForm");
+  form.addEventListener("submit", handleSubmit);
+});
 
 async function loadProducts() {
   try {
@@ -38,7 +43,7 @@ async function loadProducts() {
   }
 }
 
-document.getElementById("udiForm").addEventListener("submit", async (e) => {
+async function handleSubmit(e) {
   e.preventDefault();
 
   const payload = {
@@ -48,18 +53,20 @@ document.getElementById("udiForm").addEventListener("submit", async (e) => {
     count: document.getElementById("count").value
   };
 
-  const resp = await fetch("/.netlify/functions/trigger-udi", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const resp = await fetch("/.netlify/functions/trigger-udi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  document.getElementById("output").textContent = resp.ok
-    ? "UDI Job gestartet."
-    : "Fehler beim Starten des UDI Jobs.";
-});
+    document.getElementById("output").textContent = resp.ok
+      ? "UDI Job gestartet. GitHub Action läuft."
+      : "Fehler beim Starten des UDI Jobs.";
 
-  document.getElementById("output").textContent = response.ok
-    ? "UDI Erzeugung gestartet! GitHub Action läuft."
-    : `Fehler: ${response.status} ${response.statusText}`;
-});
+  } catch (err) {
+    console.error(err);
+    document.getElementById("output").textContent =
+      "Netzwerkfehler beim Starten des UDI Jobs.";
+  }
+}
