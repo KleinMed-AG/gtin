@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 export default async (req) => {
   const corsHeaders = {
@@ -24,15 +25,26 @@ export default async (req) => {
     // 1️⃣ Create JWT for GitHub App
     const now = Math.floor(Date.now() / 1000);
 
+    const rawKey = process.env.GITHUB_PRIVATE_KEY;
+
+    // Normalize line breaks (handles all Netlify variants)
+    const privateKey = crypto.createPrivateKey({
+      key: rawKey.replace(/\\n/g, "\n"),
+      format: "pem"
+    });
+
+    const now = Math.floor(Date.now() / 1000);
+
     const appJwt = jwt.sign(
       {
         iat: now - 60,
         exp: now + 600,
         iss: process.env.GITHUB_APP_ID
-      },
-      process.env.GITHUB_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      }, 
+      privateKey,
       { algorithm: "RS256" }
     );
+
 
     // 2️⃣ Exchange JWT for installation token
     const tokenResp = await fetch(
