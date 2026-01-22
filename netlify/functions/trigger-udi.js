@@ -30,7 +30,7 @@ export default async (req) => {
         exp: now + 600,
         iss: process.env.GITHUB_APP_ID
       },
-      process.env.GITHUB_PRIVATE_KEY,
+      process.env.GITHUB_PRIVATE_KEY.replace(/\\n/g, "\n"),
       { algorithm: "RS256" }
     );
 
