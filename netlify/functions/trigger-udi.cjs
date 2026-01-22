@@ -1,35 +1,24 @@
-import jwt from "jsonwebtoken";
-import crypto from "crypto";
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
-export default async (req) => {
-  const corsHeaders = {
+exports.handler = async (event) => {
+  const headers = {
     "Access-Control-Allow-Origin": "https://kleinmed-ag.github.io",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type"
   };
 
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return new Response("Method Not Allowed", {
-      status: 405,
-      headers: corsHeaders
-    });
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers };
   }
 
   try {
-    const payload = await req.json();
+    const body = JSON.parse(event.body);
 
-    // 1️⃣ Create JWT for GitHub App
-    const now = Math.floor(Date.now() / 1000);
+    const key = process.env.GITHUB_PRIVATE_KEY.replace(/\\n/g, "\n");
 
-    const rawKey = process.env.GITHUB_PRIVATE_KEY;
-
-    // Normalize line breaks (handles all Netlify variants)
     const privateKey = crypto.createPrivateKey({
-      key: rawKey.replace(/\\n/g, "\n"),
+      key,
       format: "pem"
     });
 
@@ -40,13 +29,11 @@ export default async (req) => {
         iat: now - 60,
         exp: now + 600,
         iss: process.env.GITHUB_APP_ID
-      }, 
+      },
       privateKey,
       { algorithm: "RS256" }
     );
 
-
-    // 2️⃣ Exchange JWT for installation token
     const tokenResp = await fetch(
       `https://api.github.com/app/installations/${process.env.GITHUB_INSTALLATION_ID}/access_tokens`,
       {
@@ -58,44 +45,45 @@ export default async (req) => {
       }
     );
 
+    const tokenData = await tokenResp.json();
+
     if (!tokenResp.ok) {
-      const t = await tokenResp.text();
-      return new Response(t, { status: 500, headers: corsHeaders });
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify(tokenData)
+      };
     }
 
-    const { token } = await tokenResp.json();
-
-    // 3️⃣ Trigger workflow_dispatch
     const ghResp = await fetch(
       "https://api.github.com/repos/kleinmed-ag/gtin/actions/workflows/generate-udi.yml/dispatches",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${tokenData.token}`,
           Accept: "application/vnd.github+json",
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
           ref: "main",
-          inputs: payload
+          inputs: body
         })
       }
     );
 
     if (!ghResp.ok) {
       const t = await ghResp.text();
-      return new Response(t, { status: ghResp.status, headers: corsHeaders });
+      return { statusCode: ghResp.status, headers, body: t };
     }
 
-    return new Response("OK", {
-      status: 200,
-      headers: corsHeaders
-    });
+    return { statusCode: 200, headers, body: "OK" };
 
   } catch (err) {
-    return new Response(err.message, {
-      status: 500,
-      headers: corsHeaders
-    });
+    console.error(err);
+    return {
+      statusCode: 500,
+      headers,
+      body: err.message
+    };
   }
 };
