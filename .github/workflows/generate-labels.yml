@@ -1,0 +1,66 @@
+name: Generate UDI Labels
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: 'Product Name'
+        required: true
+        type: string
+      gtin:
+        description: 'GTIN Number'
+        required: true
+        type: string
+      mfg_date:
+        description: 'Manufacturing Date (YYMMDD)'
+        required: true
+        type: string
+      serial_start:
+        description: 'Starting Serial Number'
+        required: true
+        type: number
+      count:
+        description: 'Number of Labels'
+        required: true
+        type: number
+
+jobs:
+  generate-labels:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install reportlab qrcode[pil] pillow
+
+      - name: Generate UDI Labels
+        run: |
+          python scripts/generate_udi_labels.py \
+            --product "${{ inputs.product }}" \
+            --gtin "${{ inputs.gtin }}" \
+            --mfg-date "${{ inputs.mfg_date }}" \
+            --serial-start ${{ inputs.serial_start }} \
+            --count ${{ inputs.count }}
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: udi-labels-${{ inputs.serial_start }}-${{ inputs.mfg_date }}
+          path: output/*.pdf
+          retention-days: 30
+
+      - name: Update product database
+        run: |
+          python scripts/update_serial.py \
+            --gtin "${{ inputs.gtin }}" \
+            --last-serial $((${{ inputs.serial_start }} + ${{ inputs.count }} - 1))
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
