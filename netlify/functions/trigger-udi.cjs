@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 
 exports.handler = async (event) => {
   const headers = {
@@ -15,15 +14,12 @@ exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
 
-    const key = process.env.GITHUB_PRIVATE_KEY.replace(/\\n/g, "\n");
-
-    const privateKey = crypto.createPrivateKey({
-      key,
-      format: "pem"
-    });
+    // 🔑 Normalize PEM key (THIS IS CRITICAL)
+    const privateKey = process.env.GITHUB_PRIVATE_KEY.replace(/\\n/g, "\n").trim();
 
     const now = Math.floor(Date.now() / 1000);
 
+    // 1️⃣ Create GitHub App JWT
     const appJwt = jwt.sign(
       {
         iat: now - 60,
@@ -34,6 +30,7 @@ exports.handler = async (event) => {
       { algorithm: "RS256" }
     );
 
+    // 2️⃣ Exchange for installation token
     const tokenResp = await fetch(
       `https://api.github.com/app/installations/${process.env.GITHUB_INSTALLATION_ID}/access_tokens`,
       {
@@ -55,6 +52,7 @@ exports.handler = async (event) => {
       };
     }
 
+    // 3️⃣ Trigger workflow_dispatch
     const ghResp = await fetch(
       "https://api.github.com/repos/kleinmed-ag/gtin/actions/workflows/generate-udi.yml/dispatches",
       {
