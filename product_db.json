@@ -2,11 +2,27 @@
   "products": [
     {
       "id": "prod-001",
-      "name": "Biorelax Schlafmatte",
-      "gtin": "7649995659102",
-      "lastSerial": 8110007104,
-      "description": "Linderung nozizeptiver & neuropathischer Schmerzen",
-      "group": "Medizinprodukte"
+      "name": "Surgical Mask Type IIR",
+      "gtin": "04260123456789",
+      "lastSerial": 1000,
+      "description": "Medical face mask",
+      "group": "PPE"
+    },
+    {
+      "id": "prod-002",
+      "name": "N95 Respirator",
+      "gtin": "04260987654321",
+      "lastSerial": 5000,
+      "description": "High filtration respirator",
+      "group": "PPE"
+    },
+    {
+      "id": "prod-003",
+      "name": "Sterile Gloves Size M",
+      "gtin": "04260555666777",
+      "lastSerial": 2500,
+      "description": "Latex-free surgical gloves",
+      "group": "Protective Equipment"
     }
   ]
 }
