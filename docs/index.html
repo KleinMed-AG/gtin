@@ -63,51 +63,62 @@ const UDILabelGenerator = () => {
   /* ----------------------------------
      SUBMIT
   ----------------------------------*/
-  const handleSubmit = async () => {
-    const product = products.find(p => p.id === selectedProduct);
-    if (!product) return;
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    return;
+  }
 
-    setIsLoading(true);
-    setMessage(null);
+  setIsLoading(true);
+  setMessage(null);
 
-    try {
-      const response = await fetch(
-        "https://api.github.com/repos/KleinMed-AG/gtin/actions/workflows/generate-labels.yml/dispatches",
-        {
-          method: "POST",
-          headers: {
-            "Accept": "application/vnd.github+json",
-            "Authorization": `Bearer ${TOKEN}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            ref: "main",
-            inputs: {
-              product: product.name,
-              gtin: product.gtin,
-              mfg_date: mfgDate,
-              serial_start: String(serialNumber),
-              count: String(labelCount)
-            }
-          })
-        }
-      );
+  const product = products.find(p => p.id === selectedProduct);
+  
+  const payload = {
+    product: product.name,
+    gtin: product.gtin,
+    mfg_date: mfgDate,
+    serial_start: parseInt(serialNumber),
+    count: parseInt(labelCount)
+  };
 
-      if (!response.ok) {
-        throw new Error("GitHub Workflow konnte nicht gestartet werden");
-      }
+  try {
+    // Call your Vercel API endpoint
+    const response = await fetch('https://your-project-name.vercel.app/api/trigger', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
 
+    const data = await response.json();
+
+    if (data.success) {
       setMessage({
-        type: "success",
-        text: `Workflow gestartet für ${product.name}`
+        type: 'success',
+        text: `Job erfolgreich gestartet! ${labelCount} Etiketten werden für "${product.name}" generiert (Serie ${serialNumber}-${parseInt(serialNumber) + parseInt(labelCount) - 1}). Prüfen Sie die Actions-Seite für den Download.`
       });
 
-    } catch (err) {
-      setMessage({ type: "error", text: err.message });
-    } finally {
-      setIsLoading(false);
+      // Update local product list
+      const updatedProducts = products.map(p => 
+        p.id === selectedProduct 
+          ? { ...p, lastSerial: parseInt(serialNumber) + parseInt(labelCount) - 1 }
+          : p
+      );
+      setProducts(updatedProducts);
+    } else {
+      throw new Error(data.error || 'Workflow konnte nicht gestartet werden');
     }
-  };
+
+  } catch (error) {
+    setMessage({
+      type: 'error',
+      text: 'Fehler beim Starten des Jobs: ' + error.message
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
