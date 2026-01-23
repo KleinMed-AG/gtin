@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDI Label Generator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // PASTE THE REACT COMPONENT CODE HERE
+        // (Copy everything from the artifact above, starting from "const UDILabelGenerator = () => {")
+        
+        const UDILabelGenerator = () => {
+          const [products, setProducts] = useState([]);
+          const [selectedProduct, setSelectedProduct] = useState('');
+          const [mfgDate, setMfgDate] = useState('');
+          const [serialNumber, setSerialNumber] = useState('');
+          const [labelCount, setLabelCount] = useState('1');
+          const [isLoading, setIsLoading] = useState(false);
+          const [message, setMessage] = useState(null);
+          const [errors, setErrors] = useState({});
+
+          useEffect(() => {
+            loadProductDatabase();
+          }, []);
+
+          const loadProductDatabase = async () => {
+            try {
+              const response = await fetch('https://raw.githubusercontent.com/YOUR-USERNAME/udi-label-generator/main/product_db.json');
+              const data = await response.json();
+              setProducts(data.products);
+            } catch (error) {
+              setMessage({
+                type: 'error',
+                text: 'Fehler beim Laden der Produktdatenbank: ' + error.message
+              });
+            }
+          };
+
+          useEffect(() => {
+            if (selectedProduct) {
+              const product = products.find(p => p.id === selectedProduct);
+              if (product) {
+                setSerialNumber(String(product.lastSerial + 1));
+              }
+            }
+          }, [selectedProduct, products]);
+
+          const validateForm = () => {
+            const newErrors = {};
+
+            if (!selectedProduct) {
+              newErrors.product = 'Bitte wählen Sie ein Produkt aus';
+            }
+
+            if (!mfgDate) {
+              newErrors.mfgDate = 'Herstellungsdatum erforderlich';
+            } else if (!/^\d{6}$/.test(mfgDate)) {
+              newErrors.mfgDate = 'Datum muss 6 Ziffern sein (JJMMTT)';
+            }
+
+            if (!serialNumber) {
+              newErrors.serialNumber = 'Seriennummer erforderlich';
+            } else if (parseInt(serialNumber) <= 0 || !Number.isInteger(Number(serialNumber))) {
+              newErrors.serialNumber = 'Seriennummer muss eine positive Ganzzahl sein';
+            }
+
+            if (!labelCount) {
+              newErrors.labelCount = 'Anzahl der Etiketten erforderlich';
+            } else if (parseInt(labelCount) <= 0 || !Number.isInteger(Number(labelCount))) {
+              newErrors.labelCount = 'Anzahl muss eine positive Ganzzahl sein';
+            }
+
+            setErrors(newErrors);
+            return Object.keys(newErrors).length === 0;
+          };
+
+          const handleSubmit = async () => {
+            if (!validateForm()) {
+              return;
+            }
+
+            setIsLoading(true);
+            setMessage(null);
+
+            const product = products.find(p => p.id === selectedProduct);
+            
+            const payload = {
+              product: product.name,
+              gtin: product.gtin,
+              mfg_date: mfgDate,
+              serial_start: parseInt(serialNumber),
+              count: parseInt(labelCount)
+            };
+
+            try {
+              // Call GitHub Actions workflow
+              const response = await fetch(
+                'https://api.github.com/repos/YOUR-USERNAME/udi-label-generator/actions/workflows/generate-labels.yml/dispatches',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    ref: 'main',
+                    inputs: {
+                      product: payload.product,
+                      gtin: payload.gtin,
+                      mfg_date: payload.mfg_date,
+                      serial_start: String(payload.serial_start),
+                      count: String(payload.count)
+                    }
+                  })
+                }
+              );
+
+              if (response.ok) {
+                setMessage({
+                  type: 'success',
+                  text: `Job erfolgreich gestartet! ${labelCount} Etiketten werden für "${product.name}" generiert (Serie ${serialNumber}-${parseInt(serialNumber) + parseInt(labelCount) - 1}).`
+                });
+              } else {
+                throw new Error('Workflow konnte nicht gestartet werden');
+              }
+
+            } catch (error) {
+              setMessage({
+                type: 'error',
+                text: 'Fehler beim Starten des Jobs: ' + error.message
+              });
+            } finally {
+              setIsLoading(false);
+            }
+          };
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+              <div className="max-w-2xl mx-auto">
+                <div className="bg-white rounded-lg shadow-xl p-8">
+                  <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                      UDI Etiketten Generator
+                    </h1>
+                    <p className="text-gray-600">
+                      Medizinprodukt-Etiketten mit QR-Code erstellen
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Produkt auswählen *
+                      </label>
+                      <select
+                        value={selectedProduct}
+                        onChange={(e) => setSelectedProduct(e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          errors.product ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">-- Bitte wählen --</option>
+                        {products.map(product => (
+                          <option key={product.id} value={product.id}>
+                            {product.name} ({product.group})
+                          </option>
+                        ))}
+                      </select>
+                      {errors.product && (
+                        <p className="mt-1 text-sm text-red-600">{errors.product}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Herstellungsdatum (JJMMTT) *
+                      </label>
+                      <input
+                        type="text"
+                        value={mfgDate}
+                        onChange={(e) => setMfgDate(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="250122"
+                        maxLength="6"
+                        className={`w-full px-4 py-2 border rounded-lg ${
+                          errors.mfgDate ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.mfgDate && (
+                        <p className="mt-1 text-sm text-red-600">{errors.mfgDate}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start-Seriennummer *
+                      </label>
+                      <input
+                        type="number"
+                        value={serialNumber}
+                        onChange={(e) => setSerialNumber(e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-lg ${
+                          errors.serialNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.serialNumber && (
+                        <p className="mt-1 text-sm text-red-600">{errors.serialNumber}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Anzahl der Etiketten *
+                      </label>
+                      <input
+                        type="number"
+                        value={labelCount}
+                        onChange={(e) => setLabelCount(e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-lg ${
+                          errors.labelCount ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.labelCount && (
+                        <p className="mt-1 text-sm text-red-600">{errors.labelCount}</p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={handleSubmit}
+                      disabled={isLoading}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg"
+                    >
+                      {isLoading ? 'Job wird gestartet...' : 'UDI Job erzeugen'}
+                    </button>
+                  </div>
+
+                  {message && (
+                    <div className={`mt-6 p-4 rounded-lg ${
+                      message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                    }`}>
+                      <p className="font-medium">{message.text}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        };
+        
+        ReactDOM.render(<UDILabelGenerator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
