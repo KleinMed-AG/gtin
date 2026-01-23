@@ -1,28 +1,8 @@
 name: Generate UDI Labels
 
 on:
-  workflow_dispatch:
-    inputs:
-      product:
-        description: 'Product Name'
-        required: true
-        type: string
-      gtin:
-        description: 'GTIN Number'
-        required: true
-        type: string
-      mfg_date:
-        description: 'Manufacturing Date (YYMMDD)'
-        required: true
-        type: string
-      serial_start:
-        description: 'Starting Serial Number'
-        required: true
-        type: number
-      count:
-        description: 'Number of Labels'
-        required: true
-        type: number
+  repository_dispatch:
+    types: [generate-labels]
 
 jobs:
   generate-labels:
@@ -44,23 +24,21 @@ jobs:
       - name: Generate UDI Labels
         run: |
           python scripts/generate_udi_labels.py \
-            --product "${{ inputs.product }}" \
-            --gtin "${{ inputs.gtin }}" \
-            --mfg-date "${{ inputs.mfg_date }}" \
-            --serial-start ${{ inputs.serial_start }} \
-            --count ${{ inputs.count }}
+            --product "${{ github.event.client_payload.product }}" \
+            --gtin "${{ github.event.client_payload.gtin }}" \
+            --mfg-date "${{ github.event.client_payload.mfg_date }}" \
+            --serial-start ${{ github.event.client_payload.serial_start }} \
+            --count ${{ github.event.client_payload.count }}
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
-          name: udi-labels-${{ inputs.serial_start }}-${{ inputs.mfg_date }}
+          name: udi-labels-${{ github.event.client_payload.serial_start }}-${{ github.event.client_payload.mfg_date }}
           path: output/*.pdf
           retention-days: 30
 
       - name: Update product database
         run: |
           python scripts/update_serial.py \
-            --gtin "${{ inputs.gtin }}" \
-            --last-serial $((${{ inputs.serial_start }} + ${{ inputs.count }} - 1))
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            --gtin "${{ github.event.client_payload.gtin }}" \
+            --last-serial $((${{ github.event.client_payload.serial_start }} + ${{ github.event.client_payload.count }} - 1))
