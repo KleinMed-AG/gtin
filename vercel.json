@@ -1,12 +1,12 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/trigger",
-      "dest": "/api/trigger.js"
+      "source": "/api/trigger",
+      "destination": "/api/trigger.js"
     },
     {
-      "src": "/",
-      "dest": "/index.js"
+      "source": "/",
+      "destination": "/index.html"
     }
   ]
 }
