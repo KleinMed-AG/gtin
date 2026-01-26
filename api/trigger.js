@@ -1,4 +1,14 @@
 export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -13,7 +23,8 @@ export default async function handler(req, res) {
         headers: {
           'Accept': 'application/vnd.github.v3+json',
           'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'User-Agent': 'UDI-Generator'
         },
         body: JSON.stringify({
           event_type: 'generate-labels',
@@ -25,9 +36,15 @@ export default async function handler(req, res) {
     if (response.status === 204) {
       return res.status(200).json({ success: true });
     } else {
-      return res.status(500).json({ error: 'Workflow failed to trigger' });
+      const errorText = await response.text();
+      console.error('GitHub API error:', response.status, errorText);
+      return res.status(500).json({ 
+        error: 'Workflow failed to trigger',
+        details: errorText 
+      });
     }
   } catch (error) {
+    console.error('Error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
