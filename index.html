@@ -24,6 +24,8 @@
           const [isLoading, setIsLoading] = useState(false);
           const [message, setMessage] = useState(null);
           const [errors, setErrors] = useState({});
+          const [workflowStatus, setWorkflowStatus] = useState(null);
+          const [downloadUrl, setDownloadUrl] = useState(null);
 
           const API_URL = 'https://gtin-kohl.vercel.app/api/trigger';
 
@@ -39,15 +41,10 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
               
-              const text = await response.text();
-              console.log('Raw response:', text.substring(0, 100)); // Show first 100 chars
-              
-              const data = JSON.parse(text);
-              console.log('Parsed data:', data);
+              const data = await response.json();
               
               if (data && data.products && Array.isArray(data.products)) {
                 setProducts(data.products);
-                console.log('Products loaded:', data.products.length);
               } else {
                 throw new Error('Invalid data format');
               }
@@ -68,6 +65,85 @@
               }
             }
           }, [selectedProduct, products]);
+
+          const checkWorkflowStatus = async (runId, repo) => {
+            try {
+              const response = await fetch(
+                `https://api.github.com/repos/${repo}/actions/runs/${runId}`,
+                {
+                  headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                  }
+                }
+              );
+              
+              const data = await response.json();
+              return data;
+            } catch (error) {
+              console.error('Error checking workflow status:', error);
+              return null;
+            }
+          };
+
+          const getArtifactUrl = async (runId, repo) => {
+            try {
+              const response = await fetch(
+                `https://api.github.com/repos/${repo}/actions/runs/${runId}/artifacts`,
+                {
+                  headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                  }
+                }
+              );
+              
+              const data = await response.json();
+              if (data.artifacts && data.artifacts.length > 0) {
+                return `https://github.com/${repo}/actions/runs/${runId}`;
+              }
+              return null;
+            } catch (error) {
+              console.error('Error getting artifact:', error);
+              return null;
+            }
+          };
+
+          const pollWorkflowStatus = async (runId, repo) => {
+            const maxAttempts = 60; // 5 minutes maximum
+            let attempts = 0;
+
+            const poll = async () => {
+              attempts++;
+              const status = await checkWorkflowStatus(runId, repo);
+              
+              if (status) {
+                setWorkflowStatus(status.status);
+                
+                if (status.status === 'completed') {
+                  if (status.conclusion === 'success') {
+                    const artifactUrl = await getArtifactUrl(runId, repo);
+                    setDownloadUrl(artifactUrl);
+                    setMessage({
+                      type: 'success',
+                      text: 'Labels erfolgreich generiert! PDF und CSV sind bereit zum Download.'
+                    });
+                  } else {
+                    setMessage({
+                      type: 'error',
+                      text: 'Label-Generierung fehlgeschlagen. Bitte prüfen Sie die Actions-Logs.'
+                    });
+                  }
+                  setIsLoading(false);
+                  return;
+                }
+                
+                if (attempts < maxAttempts && status.status !== 'completed') {
+                  setTimeout(poll, 5000); // Check every 5 seconds
+                }
+              }
+            };
+
+            poll();
+          };
 
           const validateForm = () => {
             const newErrors = {};
@@ -105,6 +181,8 @@
 
             setIsLoading(true);
             setMessage(null);
+            setWorkflowStatus('queued');
+            setDownloadUrl(null);
 
             const product = products.find(p => p.id === selectedProduct);
             
@@ -130,15 +208,19 @@
               if (data.success) {
                 setMessage({
                   type: 'success',
-                  text: `Job erfolgreich gestartet! ${labelCount} Etiketten werden für "${product.name}" generiert (Serie ${serialNumber}-${parseInt(serialNumber) + parseInt(labelCount) - 1}).`
+                  text: `Job gestartet! Generiere ${labelCount} Etiketten für "${product.name}" (Serie ${serialNumber}-${parseInt(serialNumber) + parseInt(labelCount) - 1})...`
                 });
 
-                const updatedProducts = products.map(p => 
-                  p.id === selectedProduct 
-                    ? { ...p, lastSerial: parseInt(serialNumber) + parseInt(labelCount) - 1 }
-                    : p
-                );
-                setProducts(updatedProducts);
+                // Start polling for status
+                if (data.run_id) {
+                  pollWorkflowStatus(data.run_id, data.repo);
+                }
+
+                // Reload product database to get updated serial numbers
+                setTimeout(() => {
+                  loadProductDatabase();
+                }, 10000); // Wait 10 seconds before reloading
+
               } else {
                 throw new Error(data.error || 'Workflow konnte nicht gestartet werden');
               }
@@ -148,9 +230,20 @@
                 type: 'error',
                 text: 'Fehler beim Starten des Jobs: ' + error.message
               });
-            } finally {
               setIsLoading(false);
             }
+          };
+
+          const getStatusMessage = () => {
+            if (!workflowStatus) return null;
+            
+            const statusMessages = {
+              'queued': '⏳ In Warteschlange...',
+              'in_progress': '⚙️ Labels werden generiert...',
+              'completed': '✅ Fertig!'
+            };
+            
+            return statusMessages[workflowStatus] || workflowStatus;
           };
 
           return (
@@ -174,7 +267,8 @@
                       <select
                         value={selectedProduct}
                         onChange={(e) => setSelectedProduct(e.target.value)}
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        disabled={isLoading}
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 ${
                           errors.product ? 'border-red-500' : 'border-gray-300'
                         }`}
                       >
@@ -204,9 +298,10 @@
                         type="text"
                         value={mfgDate}
                         onChange={(e) => setMfgDate(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        disabled={isLoading}
                         placeholder="250122"
                         maxLength="6"
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 ${
                           errors.mfgDate ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
@@ -226,10 +321,11 @@
                         type="number"
                         value={serialNumber}
                         onChange={(e) => setSerialNumber(e.target.value)}
+                        disabled={isLoading}
                         placeholder="1001"
                         min="1"
                         step="1"
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 ${
                           errors.serialNumber ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
@@ -251,10 +347,11 @@
                         type="number"
                         value={labelCount}
                         onChange={(e) => setLabelCount(e.target.value)}
+                        disabled={isLoading}
                         placeholder="1"
                         min="1"
                         step="1"
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 ${
                           errors.labelCount ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
@@ -268,7 +365,7 @@
                       disabled={isLoading}
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
                     >
-                      {isLoading ? 'Job wird gestartet...' : 'UDI Job erzeugen'}
+                      {isLoading ? getStatusMessage() || 'Job wird gestartet...' : 'UDI Job erzeugen'}
                     </button>
                   </div>
 
@@ -277,15 +374,24 @@
                       message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
                     }`}>
                       <p className="font-medium">{message.text}</p>
-                      {message.type === 'success' && (
-                        <a 
-                          href="https://github.com/KleinMed-AG/gtin/actions" 
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-block text-sm text-blue-600 hover:text-blue-800 underline"
-                        >
-                          → Zum Actions-Tab für PDF-Download
-                        </a>
+                      {message.type === 'success' && workflowStatus && (
+                        <div className="mt-2">
+                          <p className="text-sm">{getStatusMessage()}</p>
+                          {downloadUrl ? (
+                            <a 
+                              href={downloadUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 inline-block text-sm bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                            >
+                              📥 PDF & CSV herunterladen
+                            </a>
+                          ) : isLoading && (
+                            <p className="mt-2 text-sm text-gray-600">
+                              Bitte warten, während die Dateien generiert werden...
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
                   )}
@@ -294,9 +400,9 @@
                     <h3 className="font-semibold text-gray-800 mb-2">ℹ️ Hinweise</h3>
                     <ul className="text-sm text-gray-600 space-y-1">
                       <li>• Alle Felder mit * sind Pflichtfelder</li>
-                      <li>• Die Seriennummer wird automatisch basierend auf dem letzten Wert vorgeschlagen</li>
-                      <li>• Nach dem Absenden wird ein Hintergrund-Job gestartet</li>
-                      <li>• PDF-Download erfolgt nach ~30 Sekunden im Actions-Tab</li>
+                      <li>• Die Seriennummer wird automatisch aktualisiert</li>
+                      <li>• PDF und CSV werden gleichzeitig generiert</li>
+                      <li>• Download-Link erscheint nach ~30-60 Sekunden</li>
                     </ul>
                   </div>
                 </div>
