@@ -34,31 +34,49 @@
           }, []);
 
          const loadProductDatabase = async () => {
-            try {
-              const timestamp = new Date().getTime();
-              const response = await fetch(`https://raw.githubusercontent.com/KleinMed-AG/gtin/main/product_db.json?t=${timestamp}`);
-              
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              
-              const data = await response.json();
-              
-              if (data && data.products && Array.isArray(data.products)) {
-                setProducts(data.products);
-                console.log('Products loaded:', data.products.length);
-              } else {
-                throw new Error('Invalid data format');
-              }
-            } catch (error) {
-              console.error('Full error:', error);
-              setMessage({
-                type: 'error',
-                text: 'Fehler beim Laden der Produktdatenbank: ' + error.message
-              });
-            }
-          };
+  try {
+    const response = await fetch('https://api.github.com/repos/KleinMed-AG/gtin/contents/product_db.json', {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const fileData = await response.json();
+    const content = atob(fileData.content);
+    const data = JSON.parse(content);
+    
+    if (data && data.products && Array.isArray(data.products)) {
+      setProducts(data.products);
+      console.log('Products loaded with fresh data:', data.products.map(p => ({
+        name: p.name, 
+        lastSerial: p.lastSerial
+      })));
+    } else {
+      throw new Error('Invalid data format');
+    }
+  } catch (error) {
+    console.error('Full error:', error);
+    setMessage({
+      type: 'error',
+      text: 'Fehler beim Laden der Produktdatenbank: ' + error.message
+    });
+  }
+};
 
+const handleRefresh = async () => {
+  await loadProductDatabase();
+  if (selectedProduct) {
+    const product = products.find(p => p.id === selectedProduct);
+    if (product) {
+      setSerialNumber(String(product.lastSerial + 1));
+    }
+  }
+};
           useEffect(() => {
             if (selectedProduct) {
               const product = products.find(p => p.id === selectedProduct);
