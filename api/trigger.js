@@ -1,10 +1,8 @@
 export default async function handler(req, res) {
-  // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -34,7 +32,26 @@ export default async function handler(req, res) {
     );
 
     if (response.status === 204) {
-      return res.status(200).json({ success: true });
+      // Get the latest workflow run
+      const runsResponse = await fetch(
+        'https://api.github.com/repos/KleinMed-AG/gtin/actions/runs?per_page=1',
+        {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+            'User-Agent': 'UDI-Generator'
+          }
+        }
+      );
+      
+      const runsData = await runsResponse.json();
+      const run_id = runsData.workflow_runs?.[0]?.id;
+
+      return res.status(200).json({ 
+        success: true, 
+        run_id: run_id,
+        repo: 'KleinMed-AG/gtin'
+      });
     } else {
       const errorText = await response.text();
       console.error('GitHub API error:', response.status, errorText);
