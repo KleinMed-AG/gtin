@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -30,11 +32,11 @@ jobs:
             --serial-start ${{ github.event.client_payload.serial_start }} \
             --count ${{ github.event.client_payload.count }}
 
-      - name: Upload PDF artifact
+      - name: Upload PDF and CSV artifacts
         uses: actions/upload-artifact@v4
         with:
           name: udi-labels-${{ github.event.client_payload.serial_start }}-${{ github.event.client_payload.mfg_date }}
-          path: output/*.pdf
+          path: output/*
           retention-days: 30
 
       - name: Update product database
@@ -42,3 +44,11 @@ jobs:
           python scripts/update_serial.py \
             --gtin "${{ github.event.client_payload.gtin }}" \
             --last-serial $((${{ github.event.client_payload.serial_start }} + ${{ github.event.client_payload.count }} - 1))
+
+      - name: Commit updated database
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add product_db.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update serial number for GTIN ${{ github.event.client_payload.gtin }}"
+          git push
