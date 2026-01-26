@@ -4,7 +4,7 @@
       "id": "prod-001",
       "name": "Surgical Mask Type IIR",
       "gtin": "04260123456789",
-      "lastSerial": 1007,
+      "lastSerial": 1009,
       "description": "Medical face mask",
       "group": "PPE"
     },
