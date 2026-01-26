@@ -14,6 +14,7 @@ export default async function handler(req, res) {
   const { product, gtin, mfg_date, serial_start, count } = req.body;
 
   try {
+    // Trigger the workflow
     const response = await fetch(
       'https://api.github.com/repos/KleinMed-AG/gtin/dispatches',
       {
@@ -32,9 +33,12 @@ export default async function handler(req, res) {
     );
 
     if (response.status === 204) {
-      // Get the latest workflow run
+      // Wait a moment for the workflow to appear
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Get the latest workflow run for our workflow
       const runsResponse = await fetch(
-        'https://api.github.com/repos/KleinMed-AG/gtin/actions/runs?per_page=1',
+        'https://api.github.com/repos/KleinMed-AG/gtin/actions/workflows/generate-labels.yml/runs?per_page=1',
         {
           headers: {
             'Accept': 'application/vnd.github.v3+json',
