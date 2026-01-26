@@ -1,54 +1,12 @@
 {
-  "buildCommand": "echo 'No build needed'",
-  "outputDirectory": ".",
   "routes": [
     {
       "src": "/api/trigger",
       "dest": "/api/trigger.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type"
-        }
-      ]
+      "src": "/",
+      "dest": "/index.js"
     }
   ]
 }
-```
-
-## **AND Move your index.html**
-
-Since Vercel is looking for files in the root, make sure your `index.html` is in the **root directory** of your repo, not in a `public/` or `docs/` folder.
-
-Your repo structure should look like:
-```
-gtin/
-├── api/
-│   └── trigger.js
-├── scripts/
-│   ├── generate_udi_labels.py
-│   └── update_serial.py
-├── .github/
-│   └── workflows/
-│       └── generate-labels.yml
-├── index.html          ← Should be here in root
-├── product_db.json
-├── vercel.json         ← Add this new file
-└── package.json
