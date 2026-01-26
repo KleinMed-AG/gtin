@@ -35,7 +35,8 @@
 
           const loadProductDatabase = async () => {
             try {
-              const response = await fetch('https://raw.githubusercontent.com/KleinMed-AG/gtin/main/product_db.json');
+              const timestamp = new Date().getTime();
+              const response = await fetch(`https://raw.githubusercontent.com/KleinMed-AG/gtin/main/product_db.json?t=${timestamp}`);
               
               if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -45,6 +46,7 @@
               
               if (data && data.products && Array.isArray(data.products)) {
                 setProducts(data.products);
+                console.log('Products loaded:', data.products.length);
               } else {
                 throw new Error('Invalid data format');
               }
@@ -98,7 +100,8 @@
               
               const data = await response.json();
               if (data.artifacts && data.artifacts.length > 0) {
-                return `https://github.com/${repo}/actions/runs/${runId}`;
+                const artifactId = data.artifacts[0].id;
+                return `https://github.com/${repo}/actions/runs/${runId}/artifacts/${artifactId}`;
               }
               return null;
             } catch (error) {
@@ -108,7 +111,7 @@
           };
 
           const pollWorkflowStatus = async (runId, repo) => {
-            const maxAttempts = 60; // 5 minutes maximum
+            const maxAttempts = 60;
             let attempts = 0;
 
             const poll = async () => {
@@ -126,6 +129,14 @@
                       type: 'success',
                       text: 'Labels erfolgreich generiert! PDF und CSV sind bereit zum Download.'
                     });
+                    
+                    // Force reload the product database
+                    await loadProductDatabase();
+                    
+                    // Refresh serial number display
+                    const currentProduct = selectedProduct;
+                    setSelectedProduct('');
+                    setTimeout(() => setSelectedProduct(currentProduct), 100);
                   } else {
                     setMessage({
                       type: 'error',
@@ -137,7 +148,7 @@
                 }
                 
                 if (attempts < maxAttempts && status.status !== 'completed') {
-                  setTimeout(poll, 5000); // Check every 5 seconds
+                  setTimeout(poll, 5000);
                 }
               }
             };
@@ -211,15 +222,9 @@
                   text: `Job gestartet! Generiere ${labelCount} Etiketten für "${product.name}" (Serie ${serialNumber}-${parseInt(serialNumber) + parseInt(labelCount) - 1})...`
                 });
 
-                // Start polling for status
                 if (data.run_id) {
                   pollWorkflowStatus(data.run_id, data.repo);
                 }
-
-                // Reload product database to get updated serial numbers
-                setTimeout(() => {
-                  loadProductDatabase();
-                }, 10000); // Wait 10 seconds before reloading
 
               } else {
                 throw new Error(data.error || 'Workflow konnte nicht gestartet werden');
