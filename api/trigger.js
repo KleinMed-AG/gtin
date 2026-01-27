@@ -11,10 +11,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { product, gtin, mfg_date, serial_start, count } = req.body;
+  const { product_data, gtin, mfg_date, serial_start, count } = req.body;
 
   try {
-    // Trigger the workflow
     const response = await fetch(
       'https://api.github.com/repos/KleinMed-AG/gtin/dispatches',
       {
@@ -27,16 +26,20 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           event_type: 'generate-labels',
-          client_payload: { product, gtin, mfg_date, serial_start, count }
+          client_payload: { 
+            product_data, 
+            gtin, 
+            mfg_date, 
+            serial_start, 
+            count 
+          }
         })
       }
     );
 
     if (response.status === 204) {
-      // Wait a moment for the workflow to appear
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Get the latest workflow run for our workflow
       const runsResponse = await fetch(
         'https://api.github.com/repos/KleinMed-AG/gtin/actions/workflows/generate-labels.yml/runs?per_page=1',
         {
