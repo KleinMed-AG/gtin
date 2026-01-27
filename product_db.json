@@ -16,8 +16,8 @@
       "grundeinheit": "Stk.",
       "sn_lot_type": "SN",
       "warengruppe": "Medizinprodukte",
-      "temp_min": "-20°C",
-      "temp_max": "+60°C",
+      "temp_min": "-20\u00b0C",
+      "temp_max": "+60\u00b0C",
       "height": "1,5cm",
       "manufacturer": {
         "name": "KleinMed AG",
@@ -25,11 +25,11 @@
         "address_line2": "CH-6312 Steinhausen"
       },
       "distributor": {
-        "name": "Hälsa Pharma GmbH",
-        "address_line1": "Maria-Goeppert-Straße 5",
-        "address_line2": "23562 Lübeck, Germany"
+        "name": "H\u00e4lsa Pharma GmbH",
+        "address_line1": "Maria-Goeppert-Stra\u00dfe 5",
+        "address_line2": "23562 L\u00fcbeck, Germany"
       },
-      "lastSerial": 8110007612,
+      "lastSerial": 8110007615,
       "group": "Medical Devices"
     }
   ]
