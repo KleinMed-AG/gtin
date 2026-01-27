@@ -35,27 +35,40 @@
 
           const loadProductDatabase = async () => {
             try {
-              const response = await fetch('https://api.github.com/repos/KleinMed-AG/gtin/contents/product_db.json', {
-                headers: {
-                  'Accept': 'application/vnd.github.v3+json',
-                  'Cache-Control': 'no-cache'
+              // Try GitHub API first
+              let data;
+              try {
+                const apiResponse = await fetch('https://api.github.com/repos/KleinMed-AG/gtin/contents/product_db.json', {
+                  headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                  }
+                });
+      
+                if (apiResponse.ok) {
+                  const fileData = await apiResponse.json();
+                  const content = atob(fileData.content);
+                  data = JSON.parse(content);
+                } else {
+                  throw new Error('API failed, trying raw URL');
                 }
-              });
-              
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+              } catch (apiError) {
+                // Fallback to raw URL
+                console.log('API failed, using raw URL:', apiError);
+                const timestamp = new Date().getTime();
+                const rawResponse = await fetch(`https://raw.githubusercontent.com/KleinMed-AG/gtin/main/product_db.json?t=${timestamp}`, {
+                  cache: 'no-store'
+                });
+      
+                if (!rawResponse.ok) {
+                  throw new Error(`HTTP error! status: ${rawResponse.status}`);
+                }
+      
+                data = await rawResponse.json();
               }
-              
-              const fileData = await response.json();
-              const content = atob(fileData.content);
-              const data = JSON.parse(content);
-              
+    
               if (data && data.products && Array.isArray(data.products)) {
                 setProducts(data.products);
-                console.log('Products loaded with fresh data:', data.products.map(p => ({
-                  name: p.name_de, 
-                  lastSerial: p.lastSerial
-                })));
+                console.log('Products loaded:', data.products.length);
               } else {
                 throw new Error('Invalid data format');
               }
