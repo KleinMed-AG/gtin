@@ -18,7 +18,9 @@ def update_product_serial(gtin, last_serial):
         if product['gtin'] == gtin:
             product['lastSerial'] = last_serial
             updated = True
-            print(f"✓ Updated {product['name']} - Last Serial: {last_serial}")
+            # Use name_de instead of name
+            product_name = product.get('name_de', product.get('name', 'Unknown Product'))
+            print(f"✓ Updated {product_name} - Last Serial: {last_serial}")
             break
     
     if not updated:
