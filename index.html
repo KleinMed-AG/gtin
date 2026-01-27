@@ -196,14 +196,48 @@
             setDownloadUrl(null);
 
             const product = products.find(p => p.id === selectedProduct);
-            
+  
             const payload = {
-              product: product.name,
+              product_data: product,  // Send entire product object
               gtin: product.gtin,
               mfg_date: mfgDate,
               serial_start: parseInt(serialNumber),
               count: parseInt(labelCount)
             };
+
+            try {
+              const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                setMessage({
+                  type: 'success',
+                  text: `Job gestartet! Generiere ${labelCount} Etiketten für "${product.name_de}" (Serie ${serialNumber}-${parseInt(serialNumber) + parseInt(labelCount) - 1})...`
+                });
+
+                if (data.run_id) {
+                  pollWorkflowStatus(data.run_id, data.repo);
+                }
+
+              } else {
+                throw new Error(data.error || 'Workflow konnte nicht gestartet werden');
+              }
+
+            } catch (error) {
+              setMessage({
+                type: 'error',
+                text: 'Fehler beim Starten des Jobs: ' + error.message
+              });
+              setIsLoading(false);
+            }
+          };
 
             try {
               const response = await fetch(API_URL, {
