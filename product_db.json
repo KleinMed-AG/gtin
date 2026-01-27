@@ -2,27 +2,35 @@
   "products": [
     {
       "id": "prod-001",
-      "name": "Surgical Mask Type IIR",
-      "gtin": "04260123456789",
-      "lastSerial": 1009,
-      "description": "Medical face mask",
-      "group": "PPE"
-    },
-    {
-      "id": "prod-002",
-      "name": "N95 Respirator",
-      "gtin": "04260987654321",
-      "lastSerial": 5000,
-      "description": "High filtration respirator",
-      "group": "PPE"
-    },
-    {
-      "id": "prod-003",
-      "name": "Sterile Gloves Size M",
-      "gtin": "04260555666777",
-      "lastSerial": 2500,
-      "description": "Latex-free surgical gloves",
-      "group": "Protective Equipment"
+      "name_de": "Kleinsche Felder Schlafmatte",
+      "name_en": "Kleinsche Fields Mattress Topper",
+      "name_fr": "Surmatelas Kleinsche Fields",
+      "name_it": "Materassino Kleinsche Fields",
+      "description_de": "zur Linderung von nozizeptiven und neuropathischen Schmerzen",
+      "description_en": "for the relief of nociceptive and neuropathic pain",
+      "description_fr": "pour soulager les douleurs nociceptives et neuropathiques",
+      "description_it": "per il sollievo del dolore nocicettivo e neuropatico",
+      "gtin": "7649995659102",
+      "artikelnummer": "7649995659102",
+      "kurztext": "Linderung nozizeptiven & neuropathischen Schmerzen",
+      "grundeinheit": "Stk.",
+      "sn_lot_type": "SN",
+      "warengruppe": "Medizinprodukte",
+      "temp_min": "-20°C",
+      "temp_max": "+60°C",
+      "height": "1,5cm",
+      "manufacturer": {
+        "name": "KleinMed AG",
+        "address_line1": "Hinterbergstrasse 24",
+        "address_line2": "CH-6312 Steinhausen"
+      },
+      "distributor": {
+        "name": "Hälsa Pharma GmbH",
+        "address_line1": "Maria-Goeppert-Straße 5",
+        "address_line2": "23562 Lübeck, Germany"
+      },
+      "lastSerial": 8110007050,
+      "group": "Medical Devices"
     }
   ]
 }
