@@ -31,8 +31,7 @@ jobs:
       - name: Generate UDI Labels
         run: |
           python scripts/generate_udi_labels.py \
-            --product "${{ github.event.client_payload.product }}" \
-            --gtin "${{ github.event.client_payload.gtin }}" \
+            --product-json '${{ toJSON(github.event.client_payload.product_data) }}' \
             --mfg-date "${{ github.event.client_payload.mfg_date }}" \
             --serial-start ${{ github.event.client_payload.serial_start }} \
             --count ${{ github.event.client_payload.count }}
