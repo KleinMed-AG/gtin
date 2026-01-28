@@ -35,7 +35,6 @@
 
           const loadProductDatabase = async () => {
             try {
-              // Try GitHub API first
               let data;
               try {
                 const apiResponse = await fetch('https://api.github.com/repos/KleinMed-AG/gtin/contents/product_db.json', {
@@ -43,7 +42,7 @@
                     'Accept': 'application/vnd.github.v3+json'
                   }
                 });
-      
+                
                 if (apiResponse.ok) {
                   const fileData = await apiResponse.json();
                   const content = atob(fileData.content);
@@ -52,20 +51,19 @@
                   throw new Error('API failed, trying raw URL');
                 }
               } catch (apiError) {
-                // Fallback to raw URL
                 console.log('API failed, using raw URL:', apiError);
                 const timestamp = new Date().getTime();
                 const rawResponse = await fetch(`https://raw.githubusercontent.com/KleinMed-AG/gtin/main/product_db.json?t=${timestamp}`, {
                   cache: 'no-store'
                 });
-      
+                
                 if (!rawResponse.ok) {
                   throw new Error(`HTTP error! status: ${rawResponse.status}`);
                 }
-      
+                
                 data = await rawResponse.json();
               }
-    
+              
               if (data && data.products && Array.isArray(data.products)) {
                 setProducts(data.products);
                 console.log('Products loaded:', data.products.length);
@@ -121,20 +119,8 @@
 
           const getArtifactUrl = async (runId, repo) => {
             try {
-              // Use our Vercel proxy instead of direct GitHub link
+              // Use Vercel proxy for public download
               return `https://gtin-kohl.vercel.app/api/download?run_id=${runId}`;
-            } catch (error) {
-              console.error('Error getting artifact:', error);
-              return null;
-            }
-          };
-              
-              const data = await response.json();
-              if (data.artifacts && data.artifacts.length > 0) {
-                const artifactId = data.artifacts[0].id;
-                return `https://github.com/${repo}/actions/runs/${runId}/artifacts/${artifactId}`;
-              }
-              return null;
             } catch (error) {
               console.error('Error getting artifact:', error);
               return null;
@@ -444,6 +430,7 @@
                       <li>• Die Seriennummer wird automatisch aktualisiert</li>
                       <li>• PDF und CSV werden gleichzeitig generiert</li>
                       <li>• Download-Link erscheint nach ~30-60 Sekunden</li>
+                      <li>• Kein GitHub-Login erforderlich für den Download</li>
                     </ul>
                   </div>
                 </div>
