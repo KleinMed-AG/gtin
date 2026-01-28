@@ -121,14 +121,13 @@
 
           const getArtifactUrl = async (runId, repo) => {
             try {
-              const response = await fetch(
-                `https://api.github.com/repos/${repo}/actions/runs/${runId}/artifacts`,
-                {
-                  headers: {
-                    'Accept': 'application/vnd.github.v3+json'
-                  }
-                }
-              );
+              // Use our Vercel proxy instead of direct GitHub link
+              return `https://gtin-kohl.vercel.app/api/download?run_id=${runId}`;
+            } catch (error) {
+              console.error('Error getting artifact:', error);
+              return null;
+            }
+          };
               
               const data = await response.json();
               if (data.artifacts && data.artifacts.length > 0) {
@@ -423,8 +422,7 @@
                           {downloadUrl ? (
                             <a 
                               href={downloadUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              download
                               className="mt-2 inline-block text-sm bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                             >
                               📥 PDF & CSV herunterladen
