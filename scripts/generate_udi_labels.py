@@ -85,7 +85,7 @@ def create_label_pdf(product_data, mfg_date, serial_start, count, output_file):
             c.drawImage(logo, left_margin, y - logo_height, 
                        width=logo_width, height=logo_height, 
                        preserveAspectRatio=True, mask='auto')
-            y -= (logo_height + 2)
+            y -= (logo_height + 3)  # Increased spacing by 5-10%
         
         # === TOP RIGHT: CE Mark and MD Symbol ===
         top_right_y = LABEL_HEIGHT - top_margin - 0.05 * inch
@@ -102,11 +102,12 @@ def create_label_pdf(product_data, mfg_date, serial_start, count, output_file):
                        width=symbol_size, height=symbol_size,
                        preserveAspectRatio=True, mask='auto')
         
-        # === MULTILINGUAL DESCRIPTIONS ===
-        y -= 2
-        c.setFont("Helvetica", 6.5)
+        # === MULTILINGUAL DESCRIPTIONS (BOLD, CONTINUOUS BLOCK) ===
+        y -= 1  # Reduced spacing above by 20%
+        c.setFont("Helvetica-Bold", 6.5)  # Changed to Bold
         line_height = 7.5
         
+        # Continuous bold block with no gaps
         c.drawString(left_margin, y, product_data['description_de'])
         y -= line_height
         c.drawString(left_margin, y, product_data['description_en'])
@@ -114,7 +115,21 @@ def create_label_pdf(product_data, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, y, product_data['description_fr'])
         y -= line_height
         c.drawString(left_margin, y, product_data['description_it'])
-        y -= line_height + 3
+        y -= (line_height * 0.8)  # Reduced spacing below by 20%
+        
+        # === BOTTOM SYMBOLS BAR (moved UP into product description area) ===
+        if bottom_symbols:
+            symbol_width = 1.0 * inch
+            symbol_height = 0.15 * inch
+            # Position right after the 4-language block
+            symbol_x = left_margin
+            c.drawImage(bottom_symbols, symbol_x, y - symbol_height - 2,
+                       width=symbol_width, height=symbol_height,
+                       preserveAspectRatio=True, mask='auto')
+            y -= (symbol_height + 5)
+        
+        # Add spacing between product block and KleinMed block
+        y -= 0.35 * cm  # 0.3-0.5 cm spacing
         
         # === LEFT COLUMN: Manufacturer Info ===
         left_col_x = left_margin
@@ -131,26 +146,28 @@ def create_label_pdf(product_data, mfg_date, serial_start, count, output_file):
         
         c.setFont("Helvetica-Bold", 7)
         c.drawString(text_x, y - 0.08 * inch, product_data['manufacturer']['name'])
-        y -= 8
+        y -= 9  # Increased line spacing by 5-10%
         
         c.setFont("Helvetica", 6)
         c.drawString(text_x, y, product_data['manufacturer']['address_line1'])
-        y -= 7
+        y -= 8  # Increased line spacing
         c.drawString(text_x, y, product_data['manufacturer']['address_line2'])
         y -= 10
         
         # Product names (4 languages)
         c.setFont("Helvetica-Bold", 6)
         c.drawString(left_col_x, y, product_data['name_de'])
-        y -= 7
+        y -= 8  # Increased spacing
         
         c.setFont("Helvetica", 6)
         c.drawString(left_col_x, y, product_data['name_en'])
-        y -= 7
+        y -= 8
         c.drawString(left_col_x, y, product_data['name_fr'])
-        y -= 7
+        y -= 8
         c.drawString(left_col_x, y, product_data['name_it'])
-        y -= 10
+        
+        # Add spacing between product names and Hälsa block
+        y -= 0.4 * cm  # 0.3-0.5 cm spacing
         
         # EC REP symbol + Distributor
         if ec_rep_symbol:
@@ -164,11 +181,11 @@ def create_label_pdf(product_data, mfg_date, serial_start, count, output_file):
         
         c.setFont("Helvetica-Bold", 6)
         c.drawString(text_x, y - 0.05 * inch, product_data['distributor']['name'])
-        y -= 7
+        y -= 8  # Increased spacing
         
         c.setFont("Helvetica", 6)
         c.drawString(text_x, y, product_data['distributor']['address_line1'])
-        y -= 7
+        y -= 8
         c.drawString(text_x, y, product_data['distributor']['address_line2'])
         
         # === CENTER COLUMN: UDI Data ===
@@ -208,27 +225,17 @@ def create_label_pdf(product_data, mfg_date, serial_start, count, output_file):
         c.setFont("Helvetica-Bold", 8)
         c.drawString(center_x, udi_y, "GTIN")
         
-        # === BOTTOM CENTER: Symbols (Temp/Safety/Instructions) ===
-        if bottom_symbols:
-            symbol_width = 1.0 * inch
-            symbol_height = 0.15 * inch
-            bottom_y = 0.18 * inch
-            symbol_x = center_x - 0.15 * inch
-            c.drawImage(bottom_symbols, symbol_x, bottom_y,
-                       width=symbol_width, height=symbol_height,
-                       preserveAspectRatio=True, mask='auto')
-        else:
-            # Fallback to text if image not available
-            bottom_info_y = 0.22 * inch
-            c.setFont("Helvetica", 8)
-            temp_height_text = f"{product_data['temp_min']}  {product_data['height']}"
-            c.drawString(center_x - 0.1 * inch, bottom_info_y, temp_height_text)
-            c.drawString(center_x + 0.75 * inch, bottom_info_y, product_data['temp_max'])
+        # === RIGHT SIDE: QR Code (Reduced by 15-20%, moved up 1cm, centered) ===
+        # Original was 1.15 inch, reduce by 17.5% (midpoint)
+        qr_size = 0.95 * inch  # Reduced from 1.15 to 0.95
         
-        # === RIGHT SIDE: QR Code ===
-        qr_size = 1.15 * inch
-        qr_x = LABEL_WIDTH - qr_size - 0.12 * inch
-        qr_y = (LABEL_HEIGHT - qr_size) / 2 + 0.05 * inch
+        # Center horizontally in the right section
+        right_section_start = LABEL_WIDTH / 2 + 0.2 * inch
+        right_section_width = LABEL_WIDTH - right_section_start - right_margin
+        qr_x = right_section_start + (right_section_width - qr_size) / 2
+        
+        # Move up by 1.0 cm
+        qr_y = (LABEL_HEIGHT - qr_size) / 2 + 0.05 * inch + 1.0 * cm
         
         qr_img = generate_qr_code(udi_string, size=int(qr_size * 2.5))
         c.drawImage(qr_img, qr_x, qr_y, width=qr_size, height=qr_size)
