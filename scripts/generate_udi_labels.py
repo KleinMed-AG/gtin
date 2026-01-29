@@ -45,6 +45,35 @@ def load_image_safe(path):
             print(f"Warning: Could not load {path}: {e}")
     return None
 
+def draw_wrapped_text(c, text, x, y, max_width, font="Helvetica", size=6):
+    """Draw text with word wrapping within max_width"""
+    c.setFont(font, size)
+    words = text.split()
+    lines = []
+    current_line = []
+    
+    for word in words:
+        test_line = ' '.join(current_line + [word])
+        width = c.stringWidth(test_line, font, size)
+        if width <= max_width:
+            current_line.append(word)
+        else:
+            if current_line:
+                lines.append(' '.join(current_line))
+                current_line = [word]
+            else:
+                lines.append(word)
+    
+    if current_line:
+        lines.append(' '.join(current_line))
+    
+    line_height = size + 2
+    for line in lines:
+        c.drawString(x, y, line)
+        y -= line_height
+    
+    return y
+
 def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     """Create PDF with UDI labels with correct 3-row layout"""
     c = canvas.Canvas(output_file, pagesize=(LABEL_WIDTH, LABEL_HEIGHT))
@@ -65,7 +94,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     right_margin = 0.15 * inch
     
     # Column split: 2/3 left, 1/3 right
-    split_x = left_margin + (LABEL_WIDTH - left_margin - right_margin) * 0.67
+    usable_width = LABEL_WIDTH - left_margin - right_margin
+    left_column_width = usable_width * 0.67
+    split_x = left_margin + left_column_width
 
     for i in range(count):
         serial = serial_start + i
@@ -80,107 +111,108 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # Logo (leftmost)
         if logo:
-            logo_w = 0.70 * inch
-            logo_h = 0.20 * inch
+            logo_w = 0.60 * inch
+            logo_h = 0.18 * inch
             c.drawImage(logo, left_margin, y - logo_h, 
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
         
         # Spec symbols (center-left)
         if spec_symbols:
-            spec_w = 1.00 * inch
-            spec_h = 0.15 * inch
-            spec_x = left_margin + 0.80 * inch
-            c.drawImage(spec_symbols, spec_x, y - spec_h - 0.02 * inch,
+            spec_w = 0.90 * inch
+            spec_h = 0.14 * inch
+            spec_x = left_margin + 0.70 * inch
+            c.drawImage(spec_symbols, spec_x, y - spec_h - 0.01 * inch,
                        width=spec_w, height=spec_h,
                        preserveAspectRatio=True, mask="auto")
         
         # MD symbol and CE mark (rightmost)
-        symbol_size = 0.15 * inch
+        symbol_size = 0.14 * inch
         right_x = LABEL_WIDTH - right_margin - symbol_size
         
         if ce_mark:
-            c.drawImage(ce_mark, right_x, y - symbol_size - 0.02 * inch,
+            c.drawImage(ce_mark, right_x, y - symbol_size - 0.01 * inch,
                        width=symbol_size, height=symbol_size,
                        preserveAspectRatio=True, mask="auto")
         
         if md_symbol:
-            c.drawImage(md_symbol, right_x - symbol_size - 0.05 * inch, y - symbol_size - 0.02 * inch,
+            c.drawImage(md_symbol, right_x - symbol_size - 0.04 * inch, y - symbol_size - 0.01 * inch,
                        width=symbol_size, height=symbol_size,
                        preserveAspectRatio=True, mask="auto")
         
-        y -= 0.30 * inch
+        y -= 0.26 * inch
         
         # === MIDDLE SECTION: 2/3 left (names + descriptions), 1/3 right (GTIN data) ===
         middle_section_top = y
         
         # LEFT 2/3: Product names (4 languages, bold)
         left_y = middle_section_top
-        c.setFont("Helvetica-Bold", 7)
+        c.setFont("Helvetica-Bold", 6)
         c.drawString(left_margin, left_y, product["name_de"])
-        left_y -= 9
+        left_y -= 7
         
-        c.setFont("Helvetica", 6.5)
+        c.setFont("Helvetica", 5.5)
         c.drawString(left_margin, left_y, product["name_en"])
-        left_y -= 8
+        left_y -= 7
         c.drawString(left_margin, left_y, product["name_fr"])
-        left_y -= 8
+        left_y -= 7
         c.drawString(left_margin, left_y, product["name_it"])
-        left_y -= 12
+        left_y -= 10
         
-        # LEFT 2/3: Descriptions (4 languages, bold)
-        c.setFont("Helvetica-Bold", 6.5)
-        c.drawString(left_margin, left_y, product["description_de"])
-        left_y -= 8
-        c.drawString(left_margin, left_y, product["description_en"])
-        left_y -= 8
-        c.drawString(left_margin, left_y, product["description_fr"])
-        left_y -= 8
-        c.drawString(left_margin, left_y, product["description_it"])
+        # LEFT 2/3: Descriptions (4 languages, bold, wrapped within 2/3 width)
+        c.setFont("Helvetica-Bold", 5.5)
+        left_y = draw_wrapped_text(c, product["description_de"], left_margin, left_y, left_column_width, "Helvetica-Bold", 5.5)
+        left_y -= 2
+        left_y = draw_wrapped_text(c, product["description_en"], left_margin, left_y, left_column_width, "Helvetica-Bold", 5.5)
+        left_y -= 2
+        left_y = draw_wrapped_text(c, product["description_fr"], left_margin, left_y, left_column_width, "Helvetica-Bold", 5.5)
+        left_y -= 2
+        left_y = draw_wrapped_text(c, product["description_it"], left_margin, left_y, left_column_width, "Helvetica-Bold", 5.5)
         
-        # RIGHT 1/3: GTIN data
+        # RIGHT 1/3: GTIN data (aligned)
         right_y = middle_section_top
-        right_x = split_x + 0.10 * inch
+        symbol_x = split_x + 0.05 * inch
+        text_x = symbol_x + 0.16 * inch
         
         # GTIN label
-        c.setFont("Helvetica-Bold", 8)
-        c.drawString(right_x, right_y, "GTIN")
+        c.setFont("Helvetica-Bold", 7)
+        c.drawString(text_x, right_y, "GTIN")
         right_y -= 10
         
-        # GTIN number with UDI symbol
+        # GTIN number with UDI symbol (aligned)
         if udi_symbol:
-            sym_size = 0.13 * inch
-            c.drawImage(udi_symbol, right_x - 0.16 * inch, right_y - 0.08 * inch,
+            sym_size = 0.12 * inch
+            c.drawImage(udi_symbol, symbol_x, right_y - 0.07 * inch,
                        width=sym_size, height=sym_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 9)
-        c.drawString(right_x, right_y, f"(01){product['gtin']}")
-        right_y -= 14
+        c.setFont("Helvetica", 8)
+        c.drawString(text_x, right_y, f"(01){product['gtin']}")
+        right_y -= 12
         
-        # Manufacturing date with manufacturer symbol (image6.png)
+        # Manufacturing date with manufacturer symbol (aligned)
         if manufacturer_symbol:
-            sym_size = 0.13 * inch
-            c.drawImage(manufacturer_symbol, right_x - 0.16 * inch, right_y - 0.08 * inch,
+            sym_size = 0.12 * inch
+            c.drawImage(manufacturer_symbol, symbol_x, right_y - 0.07 * inch,
                        width=sym_size, height=sym_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 9)
-        c.drawString(right_x, right_y, f"(11){mfg_date}")
-        right_y -= 14
+        c.setFont("Helvetica", 8)
+        c.drawString(text_x, right_y, f"(11){mfg_date}")
+        right_y -= 12
         
-        # Serial number with SN symbol
+        # Serial number with SN symbol (aligned)
         if sn_symbol:
-            sym_size = 0.13 * inch
-            c.drawImage(sn_symbol, right_x - 0.16 * inch, right_y - 0.08 * inch,
+            sym_size = 0.12 * inch
+            c.drawImage(sn_symbol, symbol_x, right_y - 0.07 * inch,
                        width=sym_size, height=sym_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 9)
-        c.drawString(right_x, right_y, f"(21){serial}")
+        c.setFont("Helvetica", 8)
+        c.drawString(text_x, right_y, f"(21){serial}")
         
         # === BOTTOM SECTION: 2/3 left (company info), 1/3 right (QR code) ===
-        bottom_section_top = LABEL_HEIGHT - 1.45 * inch
+        bottom_section_top = LABEL_HEIGHT - 1.40 * inch
         
         # LEFT 2/3: Manufacturer info
         bottom_left_y = bottom_section_top
@@ -188,38 +220,38 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Manufacturer symbol + KleinMed AG info
         text_x = left_margin
         if manufacturer_symbol:
-            sym_h = 0.12 * inch
+            sym_h = 0.11 * inch
             c.drawImage(manufacturer_symbol, left_margin, bottom_left_y - sym_h + 2,
                        width=sym_h, height=sym_h,
                        preserveAspectRatio=True, mask="auto")
             text_x = left_margin + sym_h + 0.04 * inch
         
-        c.setFont("Helvetica-Bold", 7)
+        c.setFont("Helvetica-Bold", 6)
         c.drawString(text_x, bottom_left_y, product["manufacturer"]["name"])
-        bottom_left_y -= 9
-        
-        c.setFont("Helvetica", 6)
-        c.drawString(text_x, bottom_left_y, product["manufacturer"]["address_line1"])
         bottom_left_y -= 8
+        
+        c.setFont("Helvetica", 5.5)
+        c.drawString(text_x, bottom_left_y, product["manufacturer"]["address_line1"])
+        bottom_left_y -= 7
         c.drawString(text_x, bottom_left_y, product["manufacturer"]["address_line2"])
-        bottom_left_y -= 12
+        bottom_left_y -= 10
         
         # EC REP symbol + Hälsa Pharma info
         text_x = left_margin
         if ec_rep_symbol:
-            sym_h = 0.12 * inch
+            sym_h = 0.11 * inch
             c.drawImage(ec_rep_symbol, left_margin, bottom_left_y - sym_h + 2,
                        width=sym_h, height=sym_h,
                        preserveAspectRatio=True, mask="auto")
             text_x = left_margin + sym_h + 0.04 * inch
         
-        c.setFont("Helvetica-Bold", 6)
+        c.setFont("Helvetica-Bold", 5.5)
         c.drawString(text_x, bottom_left_y, product["distributor"]["name"])
-        bottom_left_y -= 8
+        bottom_left_y -= 7
         
-        c.setFont("Helvetica", 6)
+        c.setFont("Helvetica", 5.5)
         c.drawString(text_x, bottom_left_y, product["distributor"]["address_line1"])
-        bottom_left_y -= 8
+        bottom_left_y -= 7
         
         # Format address line 2 with comma
         address_line2 = product["distributor"]["address_line2"]
@@ -231,13 +263,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(text_x, bottom_left_y, address_line2)
         
         # RIGHT 1/3: QR CODE
-        qr_size_inches = 1.00 * inch
+        qr_size_inches = 0.95 * inch
         qr_size_px = int(qr_size_inches * 2.8)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
         # Position in bottom right 1/3
-        qr_x = split_x + 0.05 * inch
-        qr_y = bottom_section_top - qr_size_inches - 0.02 * inch
+        qr_x = split_x + 0.08 * inch
+        qr_y = bottom_section_top - qr_size_inches + 0.02 * inch
         
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size_inches, height=qr_size_inches)
