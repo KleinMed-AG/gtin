@@ -97,7 +97,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=symbol_size, height=symbol_size,
                        preserveAspectRatio=True, mask="auto")
 
-        y -= 0.24 * inch
+        y -= 0.25 * inch
 
         # === MULTILINGUAL HEADER (4 lines, bold, tight spacing) ===
         c.setFont("Helvetica-Bold", 6.5)
@@ -110,16 +110,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, y, product["description_fr"])
         y -= line_height
         c.drawString(left_margin, y, product["description_it"])
-        y -= 12
+        y -= 10
 
-        # === SPEC SYMBOLS (temp/height) immediately after header ===
-        if spec_symbols:
-            spec_w = 1.00 * inch
-            spec_h = 0.15 * inch
-            c.drawImage(spec_symbols, left_margin, y - spec_h,
-                       width=spec_w, height=spec_h,
-                       preserveAspectRatio=True, mask="auto")
-            y -= (spec_h + 8)
+        # === LEFT COLUMN: Company info starts here ===
+        left_column_y = y
 
         # === MANUFACTURER (KleinMed AG) ===
         text_x = left_margin
@@ -138,7 +132,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(text_x, y, product["manufacturer"]["address_line1"])
         y -= 8
         c.drawString(text_x, y, product["manufacturer"]["address_line2"])
-        y -= 11
+        y -= 12
 
         # === PRODUCT NAMES (4 languages, bold) ===
         c.setFont("Helvetica-Bold", 6)
@@ -151,7 +145,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, y, product["name_fr"])
         y -= 8
         c.drawString(left_margin, y, product["name_it"])
-        y -= 11
+        y -= 12
 
         # === EC REP / DISTRIBUTOR (Hälsa Pharma GmbH) ===
         text_x = left_margin
@@ -170,46 +164,68 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(text_x, y, product["distributor"]["address_line1"])
         y -= 8
         
-        # CRITICAL FIX: Ensure comma and space in "23562 Lübeck, Germany"
+        # Format address line 2 with comma
         address_line2 = product["distributor"]["address_line2"]
-        # Make sure there's a comma after Lübeck
-        if "Lübeck" in address_line2 and "Lübeck," not in address_line2:
-            address_line2 = address_line2.replace("Lübeck", "Lübeck,")
+        if "Lübeck" in address_line2 and "," not in address_line2:
+            # Insert comma after postal code and city
+            parts = address_line2.split()
+            if len(parts) >= 3:
+                # "23562 Lübeck Germany" -> "23562 Lübeck, Germany"
+                address_line2 = f"{parts[0]} {parts[1]}, {' '.join(parts[2:])}"
+        
         c.drawString(text_x, y, address_line2)
-        y -= 14
+        y -= 10
 
         # === CENTER COLUMN: GS1 Data Elements ===
-        center_x = LABEL_WIDTH / 2 - 0.5 * inch
-        gs1_y = LABEL_HEIGHT - top_margin - 0.95 * inch
+        center_x = LABEL_WIDTH / 2 - 0.45 * inch
+        center_y_start = left_column_y - 0.05 * inch
 
         # Serial Number with SN symbol
         if sn_symbol:
             sym_size = 0.13 * inch
-            c.drawImage(sn_symbol, center_x - 0.16 * inch, gs1_y - 0.08 * inch,
+            c.drawImage(sn_symbol, center_x - 0.16 * inch, center_y_start - 0.08 * inch,
                        width=sym_size, height=sym_size,
                        preserveAspectRatio=True, mask="auto")
 
         c.setFont("Helvetica", 9)
-        c.drawString(center_x, gs1_y, f"(21){serial}")
+        c.drawString(center_x, center_y_start, f"(21){serial}")
 
         # GTIN with UDI symbol
-        gs1_y -= 13
+        center_y_start -= 13
         if udi_symbol:
             sym_size = 0.13 * inch
-            c.drawImage(udi_symbol, center_x - 0.16 * inch, gs1_y - 0.08 * inch,
+            c.drawImage(udi_symbol, center_x - 0.16 * inch, center_y_start - 0.08 * inch,
                        width=sym_size, height=sym_size,
                        preserveAspectRatio=True, mask="auto")
 
-        c.drawString(center_x, gs1_y, f"(01){product['gtin']}")
+        c.drawString(center_x, center_y_start, f"(01){product['gtin']}")
 
         # Manufacturing date
-        gs1_y -= 13
-        c.drawString(center_x, gs1_y, f"(11){mfg_date}")
+        center_y_start -= 13
+        c.drawString(center_x, center_y_start, f"(11){mfg_date}")
 
         # GTIN label
-        gs1_y -= 17
+        center_y_start -= 17
         c.setFont("Helvetica-Bold", 8)
-        c.drawString(center_x, gs1_y, "GTIN")
+        c.drawString(center_x, center_y_start, "GTIN")
+
+        # === BOTTOM: Temperature/Height specs ===
+        bottom_y = 0.22 * inch
+        
+        if spec_symbols:
+            # Use the symbol image
+            spec_w = 1.00 * inch
+            spec_h = 0.15 * inch
+            spec_x = center_x - 0.15 * inch
+            c.drawImage(spec_symbols, spec_x, bottom_y,
+                       width=spec_w, height=spec_h,
+                       preserveAspectRatio=True, mask="auto")
+        else:
+            # Fallback to text if image not available
+            c.setFont("Helvetica", 8)
+            temp_text = f"{product['temp_min']}  {product['height']}"
+            c.drawString(center_x - 0.1 * inch, bottom_y, temp_text)
+            c.drawString(center_x + 0.7 * inch, bottom_y, product['temp_max'])
 
         # === QR CODE (right side, properly sized and positioned) ===
         qr_size_inches = 0.95 * inch
@@ -217,8 +233,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
 
         # Position: right side, vertically centered
-        qr_x = LABEL_WIDTH - qr_size_inches - 0.20 * inch
-        qr_y = (LABEL_HEIGHT - qr_size_inches) / 2 + 0.10 * inch
+        qr_x = LABEL_WIDTH - qr_size_inches - 0.18 * inch
+        qr_y = (LABEL_HEIGHT - qr_size_inches) / 2 + 0.12 * inch
 
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size_inches, height=qr_size_inches)
