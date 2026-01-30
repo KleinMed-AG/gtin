@@ -5,22 +5,22 @@ import os
 from io import BytesIO
 from PIL import Image
 from reportlab.lib.pagesizes import inch
+from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 import qrcode
 import json
 
-# ================= LABEL SIZE =================
+# Label dimensions: 3" x 2"
 LABEL_WIDTH = 3 * inch
 LABEL_HEIGHT = 2 * inch
 
-
-# ================= HELPERS =================
 def generate_udi_string(gtin, mfg_date, serial):
+    """Generate UDI string in GS1 format"""
     return f"(01){gtin}(11){mfg_date}(21){serial}"
 
-
 def generate_qr_code(data, target_px):
+    """Generate QR code with proper quiet zone"""
     qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
@@ -36,39 +36,20 @@ def generate_qr_code(data, target_px):
     buf.seek(0)
     return ImageReader(buf)
 
-
 def load_image_safe(path):
+    """Load image if exists, return None otherwise"""
     if os.path.exists(path):
         try:
             return ImageReader(path)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Warning: Could not load {path}: {e}")
     return None
 
-
-def draw_wrapped_text(c, text, x, y, max_width, font="Helvetica", size=5.5):
-    c.setFont(font, size)
-    words = text.split()
-    line = ""
-    for w in words:
-        test = f"{line} {w}".strip()
-        if c.stringWidth(test, font, size) <= max_width:
-            line = test
-        else:
-            c.drawString(x, y, line)
-            y -= size + 2
-            line = w
-    if line:
-        c.drawString(x, y, line)
-        y -= size + 2
-    return y
-
-
-# ================= MAIN PDF =================
 def create_label_pdf(product, mfg_date, serial_start, count, output_file):
+    """Create PDF following strict two-column grid system"""
     c = canvas.Canvas(output_file, pagesize=(LABEL_WIDTH, LABEL_HEIGHT))
 
-    # Assets
+    # Load assets
     logo = load_image_safe("assets/image1.png")
     ce_mark = load_image_safe("assets/image2.png")
     md_symbol = load_image_safe("assets/image3.png")
@@ -78,232 +59,257 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     udi_symbol = load_image_safe("assets/image14.png")
     spec_symbols = load_image_safe("assets/Screenshot 2026-01-28 100951.png")
 
-    # Margins
+    # STRICT GRID SYSTEM
     left_margin = 0.15 * inch
-    right_margin = 0.15 * inch
     top_margin = 0.14 * inch
-
-    # Columns (KleinMed ratio)
+    right_margin = 0.15 * inch
+    bottom_margin = 0.14 * inch
+    
+    # Two-column grid: 60-65% left, 35-40% right
     usable_width = LABEL_WIDTH - left_margin - right_margin
-    left_col_w = usable_width * 0.62
-    split_x = left_margin + left_col_w
+    left_column_width = usable_width * 0.62
+    column_gap = 0.10 * inch
+    right_column_left = left_margin + left_column_width + column_gap
+    right_column_width = usable_width - left_column_width - column_gap
 
     for i in range(count):
-        if i > 0:
-            c.showPage()
-
         serial = serial_start + i
         udi_payload = generate_udi_string(product["gtin"], mfg_date, serial)
 
-        # ================= TOP =================
-        y = LABEL_HEIGHT - top_margin
+        if i > 0:
+            c.showPage()
+            c.setPageSize((LABEL_WIDTH, LABEL_HEIGHT))
 
-        # Logo
+        # === LEFT COLUMN ===
+        left_y = LABEL_HEIGHT - top_margin
+        
+        # Logo (reduced size by 15%, more top padding)
         if logo:
-            c.drawImage(
-                logo,
-                left_margin,
-                y - 0.16 * inch,
-                width=0.52 * inch,
-                height=0.16 * inch,
-                preserveAspectRatio=True,
-                mask="auto",
-            )
-
-        # ================= RIGHT COLUMN (SINGLE FLOW) =================
-        reg_y = y
-        symbol_size = 0.12 * inch
-        right_x = LABEL_WIDTH - right_margin - symbol_size
-
-        # MD / CE
-        if ce_mark:
-            c.drawImage(
-                ce_mark,
-                right_x,
-                reg_y - symbol_size,
-                width=symbol_size,
-                height=symbol_size,
-                mask="auto",
-            )
-        if md_symbol:
-            c.drawImage(
-                md_symbol,
-                right_x - symbol_size - 0.03 * inch,
-                reg_y - symbol_size,
-                width=symbol_size,
-                height=symbol_size,
-                mask="auto",
-            )
-
-        reg_y -= symbol_size + 0.06 * inch
-
-        # Spec symbols (part of regulatory stack)
-        if spec_symbols:
-            c.drawImage(
-                spec_symbols,
-                split_x + 0.05 * inch,
-                reg_y - 0.13 * inch,
-                width=0.82 * inch,
-                height=0.13 * inch,
-                mask="auto",
-            )
-            reg_y -= 0.13 * inch + 0.10 * inch
-
-        # ================= LEFT COLUMN TEXT =================
-        left_y = y - 0.26 * inch
-
-        # Names
-        c.setFont("Helvetica-Bold", 6)
+            logo_w = 0.55 * inch  # Reduced from 0.65
+            logo_h = 0.16 * inch  # Reduced proportionally
+            c.drawImage(logo, left_margin, left_y - logo_h, 
+                       width=logo_w, height=logo_h,
+                       preserveAspectRatio=True, mask="auto")
+            left_y -= (logo_h + 0.08 * inch)  # More breathing room
+        
+        # Product name block (strong hierarchy)
+        c.setFont("Helvetica-Bold", 6.5)  # Bold for main name
         c.drawString(left_margin, left_y, product["name_de"])
-        left_y -= 6
-
-        c.setFont("Helvetica", 5.5)
+        left_y -= 7.5
+        
+        c.setFont("Helvetica", 5.5)  # Regular for translations
         c.drawString(left_margin, left_y, product["name_en"])
-        left_y -= 6
+        left_y -= 6.5
         c.drawString(left_margin, left_y, product["name_fr"])
-        left_y -= 6
+        left_y -= 6.5
         c.drawString(left_margin, left_y, product["name_it"])
-        left_y -= 8
-
-        # Descriptions (NOT bold)
-        left_y = draw_wrapped_text(c, product["description_de"], left_margin, left_y, left_col_w)
-        left_y -= 3
-        left_y = draw_wrapped_text(c, product["description_en"], left_margin, left_y, left_col_w)
-        left_y -= 3
-        left_y = draw_wrapped_text(c, product["description_fr"], left_margin, left_y, left_col_w)
-        left_y -= 3
-        left_y = draw_wrapped_text(c, product["description_it"], left_margin, left_y, left_col_w)
-
-        # ================= RIGHT COLUMN IDENTIFIERS =================
-        right_y = reg_y
-        symbol_x = split_x + 0.05 * inch
-        text_x = symbol_x + 0.16 * inch
-
-        c.setFont("Helvetica-Bold", 6.5)
-        c.drawString(text_x, right_y, "GTIN")
-        right_y -= 9
-
-        c.setFont("Helvetica", 7)
-
-        if udi_symbol:
-            c.drawImage(
-                udi_symbol,
-                symbol_x,
-                right_y - 0.10 * inch,
-                width=0.12 * inch,
-                height=0.12 * inch,
-                mask="auto",
-            )
-        c.drawString(text_x, right_y, f"(01){product['gtin']}")
-        right_y -= 9
-
+        left_y -= 12  # Clear separation before indication
+        
+        # Indication block (regular weight, not bold-heavy)
+        c.setFont("Helvetica", 5.5)  # Regular, not bold
+        line_spacing = 6.5
+        
+        # Constrain to left column width
+        max_text_width = left_column_width - 0.05 * inch
+        
+        c.drawString(left_margin, left_y, product["description_de"][:80])
+        left_y -= line_spacing
+        c.drawString(left_margin, left_y, product["description_en"][:80])
+        left_y -= line_spacing
+        c.drawString(left_margin, left_y, product["description_fr"][:80])
+        left_y -= line_spacing
+        c.drawString(left_margin, left_y, product["description_it"][:80])
+        left_y -= 16  # Increased spacing before manufacturer
+        
+        # Manufacturer block (smaller font, clean icon alignment)
+        icon_size = 0.10 * inch
+        icon_text_gap = 0.04 * inch
+        
         if manufacturer_symbol:
-            c.drawImage(
-                manufacturer_symbol,
-                symbol_x,
-                right_y - 0.10 * inch,
-                width=0.12 * inch,
-                height=0.12 * inch,
-                mask="auto",
-            )
-        c.drawString(text_x, right_y, f"(11){mfg_date}")
-        right_y -= 9
-
-        if sn_symbol:
-            c.drawImage(
-                sn_symbol,
-                symbol_x,
-                right_y - 0.10 * inch,
-                width=0.12 * inch,
-                height=0.12 * inch,
-                mask="auto",
-            )
-        c.drawString(text_x, right_y, f"(21){serial}")
-
-        # ================= BOTTOM =================
-        bottom_y = min(left_y, right_y) - 0.20 * inch
-
-        # Manufacturer
-        tx = left_margin
-        if manufacturer_symbol:
-            c.drawImage(
-                manufacturer_symbol,
-                left_margin,
-                bottom_y - 0.11 * inch + 2,
-                width=0.11 * inch,
-                height=0.11 * inch,
-                mask="auto",
-            )
-            tx += 0.15 * inch
-
-        c.setFont("Helvetica-Bold", 5.5)
-        c.drawString(tx, bottom_y, product["manufacturer"]["name"])
-        bottom_y -= 6
-
-        c.setFont("Helvetica", 5.5)
-        c.drawString(tx, bottom_y, product["manufacturer"]["address_line1"])
-        bottom_y -= 6
-        c.drawString(tx, bottom_y, product["manufacturer"]["address_line2"])
-        bottom_y -= 8
-
-        # EC REP
-        tx = left_margin
+            c.drawImage(manufacturer_symbol, left_margin, left_y - icon_size + 2,
+                       width=icon_size, height=icon_size,
+                       preserveAspectRatio=True, mask="auto")
+        
+        text_x = left_margin + icon_size + icon_text_gap
+        c.setFont("Helvetica-Bold", 5.5)  # Reduced from 6
+        c.drawString(text_x, left_y, product["manufacturer"]["name"])
+        left_y -= 7
+        
+        c.setFont("Helvetica", 5)  # Small regular
+        c.drawString(text_x, left_y, product["manufacturer"]["address_line1"])
+        left_y -= 6.5
+        c.drawString(text_x, left_y, product["manufacturer"]["address_line2"])
+        left_y -= 10  # Clear separation before EC REP
+        
+        # EC REP block (visually distinct)
         if ec_rep_symbol:
-            c.drawImage(
-                ec_rep_symbol,
-                left_margin,
-                bottom_y - 0.11 * inch + 2,
-                width=0.11 * inch,
-                height=0.11 * inch,
-                mask="auto",
-            )
-            tx += 0.15 * inch
-
+            c.drawImage(ec_rep_symbol, left_margin, left_y - icon_size + 2,
+                       width=icon_size, height=icon_size,
+                       preserveAspectRatio=True, mask="auto")
+        
+        text_x = left_margin + icon_size + icon_text_gap
         c.setFont("Helvetica-Bold", 5.5)
-        c.drawString(tx, bottom_y, product["distributor"]["name"])
-        bottom_y -= 6
-
-        c.setFont("Helvetica", 5.5)
-        c.drawString(tx, bottom_y, product["distributor"]["address_line1"])
-        bottom_y -= 6
-        c.drawString(tx, bottom_y, product["distributor"]["address_line2"])
-
-        # QR
-        qr_size = 0.85 * inch
-        qr_px = int(qr_size * 2.8)
-        qr_img = generate_qr_code(udi_payload, qr_px)
-
-        c.drawImage(
-            qr_img,
-            split_x + 0.08 * inch,
-            bottom_y - qr_size + 0.02 * inch,
-            width=qr_size,
-            height=qr_size,
-        )
+        c.drawString(text_x, left_y, product["distributor"]["name"])
+        left_y -= 7
+        
+        c.setFont("Helvetica", 5)
+        c.drawString(text_x, left_y, product["distributor"]["address_line1"])
+        left_y -= 6.5
+        
+        # Format address line 2 with comma
+        address_line2 = product["distributor"]["address_line2"]
+        if "Lübeck" in address_line2 and "," not in address_line2:
+            parts = address_line2.split()
+            if len(parts) >= 3:
+                address_line2 = f"{parts[0]} {parts[1]}, {' '.join(parts[2:])}"
+        
+        c.drawString(text_x, left_y, address_line2)
+        
+        # === RIGHT COLUMN ===
+        right_y = LABEL_HEIGHT - top_margin
+        
+        # Regulatory symbols (horizontal band, equal size)
+        symbol_row_y = right_y - 0.02 * inch
+        symbol_size = 0.13 * inch
+        symbol_spacing = 0.04 * inch
+        
+        # Start from right edge and work backwards
+        current_x = LABEL_WIDTH - right_margin - symbol_size
+        
+        if ce_mark:
+            c.drawImage(ce_mark, current_x, symbol_row_y - symbol_size,
+                       width=symbol_size, height=symbol_size,
+                       preserveAspectRatio=True, mask="auto")
+            current_x -= (symbol_size + symbol_spacing)
+        
+        if md_symbol:
+            c.drawImage(md_symbol, current_x, symbol_row_y - symbol_size,
+                       width=symbol_size, height=symbol_size,
+                       preserveAspectRatio=True, mask="auto")
+            current_x -= (symbol_size + symbol_spacing)
+        
+        # Spec symbols (temp/thickness/IFU) in same row
+        if spec_symbols:
+            spec_w = 0.85 * inch
+            spec_h = 0.12 * inch
+            spec_x = current_x - spec_w
+            c.drawImage(spec_symbols, spec_x, symbol_row_y - spec_h - 0.01 * inch,
+                       width=spec_w, height=spec_h,
+                       preserveAspectRatio=True, mask="auto")
+        
+        right_y -= 0.26 * inch
+        
+        # GTIN/LOT/SN blocks (strict vertical rhythm)
+        block_spacing = 13
+        label_value_gap = 8
+        identifier_x = right_column_left
+        icon_size = 0.11 * inch
+        icon_x = identifier_x - 0.14 * inch
+        
+        # GTIN block
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawString(identifier_x, right_y, "GTIN")
+        right_y -= label_value_gap
+        
+        if udi_symbol:
+            c.drawImage(udi_symbol, icon_x, right_y - 0.06 * inch,
+                       width=icon_size, height=icon_size,
+                       preserveAspectRatio=True, mask="auto")
+        
+        c.setFont("Helvetica", 7.5)
+        c.drawString(identifier_x, right_y, f"(01){product['gtin']}")
+        right_y -= block_spacing
+        
+        # LOT block (manufacturing date)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawString(identifier_x, right_y, "LOT")
+        right_y -= label_value_gap
+        
+        if manufacturer_symbol:
+            c.drawImage(manufacturer_symbol, icon_x, right_y - 0.06 * inch,
+                       width=icon_size, height=icon_size,
+                       preserveAspectRatio=True, mask="auto")
+        
+        c.setFont("Helvetica", 7.5)
+        c.drawString(identifier_x, right_y, f"(11){mfg_date}")
+        right_y -= block_spacing
+        
+        # SN block (serial number)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawString(identifier_x, right_y, "SN")
+        right_y -= label_value_gap
+        
+        if sn_symbol:
+            c.drawImage(sn_symbol, icon_x, right_y - 0.06 * inch,
+                       width=icon_size, height=icon_size,
+                       preserveAspectRatio=True, mask="auto")
+        
+        c.setFont("Helvetica", 7.5)
+        c.drawString(identifier_x, right_y, f"(21){serial}")
+        
+        # QR CODE (reduced size, aligned, breathing space)
+        qr_size = 0.85 * inch  # Reduced from 0.95
+        qr_size_px = int(qr_size * 2.8)
+        qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
+        
+        # Bottom-right, aligned with right column
+        qr_x = LABEL_WIDTH - right_margin - qr_size
+        qr_y = bottom_margin + 0.08 * inch
+        
+        c.drawImage(qr_img, qr_x, qr_y, 
+                   width=qr_size, height=qr_size)
 
     c.save()
+    print(f"✓ PDF created: {output_file}")
+    print(f"✓ Generated {count} labels (Serial {serial_start}-{serial_start + count - 1})")
 
+def create_csv_file(product, mfg_date, serial_start, count, output_file):
+    """Create CSV file matching spreadsheet structure"""
+    with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            "AI - GTIN", "Artikelnummer/GTIN", "Name", "Grund-einheit", "SN/LOT", 
+            "Kurztext I", "Warengruppe", "AI - Herstelldatum", "Herstelldatum", 
+            "AI - SN", "Seriennummer", "UDI", "GTIN-Etikett", 
+            "Herstelldatum-Ettkett", "Seriennummer-Etikett", "QR", "QR-Code"
+        ])
+        
+        for i in range(count):
+            serial = serial_start + i
+            udi = generate_udi_string(product["gtin"], mfg_date, serial)
+            qr_url = f"https://image-charts.com/chart?cht=qr&chs=250x250&chl={udi}"
+            
+            writer.writerow([
+                "(01)", product["gtin"], product["name_de"], 
+                product["grundeinheit"], product["sn_lot_type"],
+                product["kurztext"], product["warengruppe"], 
+                "(11)", mfg_date, "(21)", serial, udi,
+                f"(01){product['gtin']}", f"(11){mfg_date}", 
+                f"(21){serial}", udi, qr_url
+            ])
+    
+    print(f"✓ CSV created: {output_file}")
 
-# ================= CLI =================
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--product-json", required=True)
-    parser.add_argument("--mfg-date", required=True)
-    parser.add_argument("--serial-start", type=int, required=True)
-    parser.add_argument("--count", type=int, required=True)
+    parser = argparse.ArgumentParser(description="Generate UDI labels")
+    parser.add_argument("--product-json", required=True, help="Product data as JSON string")
+    parser.add_argument("--mfg-date", required=True, help="Manufacturing date (YYMMDD)")
+    parser.add_argument("--serial-start", type=int, required=True, help="Starting serial number")
+    parser.add_argument("--count", type=int, required=True, help="Number of labels")
+    
     args = parser.parse_args()
-
+    
     product = json.loads(args.product_json)
+    
     os.makedirs("output", exist_ok=True)
-
-    create_label_pdf(
-        product,
-        args.mfg_date,
-        args.serial_start,
-        args.count,
-        "output/UDI_labels.pdf",
-    )
-
+    
+    safe_name = product["name_de"].replace(" ", "_")[:30]
+    base_filename = f"UDI_Klebe-Etiketten_{safe_name}_SN{args.serial_start}-SN{args.serial_start + args.count - 1}"
+    pdf_file = f"output/{base_filename}.pdf"
+    csv_file = f"output/{base_filename}.csv"
+    
+    create_label_pdf(product, args.mfg_date, args.serial_start, args.count, pdf_file)
+    create_csv_file(product, args.mfg_date, args.serial_start, args.count, csv_file)
 
 if __name__ == "__main__":
     main()
