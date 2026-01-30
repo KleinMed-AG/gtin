@@ -101,10 +101,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.showPage()
             c.setPageSize((LABEL_WIDTH, LABEL_HEIGHT))
 
-        # ================= TOP ROW =================
+        # ==========================================================
+        # TOP ROW
+        # ==========================================================
         y = LABEL_HEIGHT - top_margin
 
-        # Logo (reduced dominance)
+        # Logo (left)
         if logo:
             logo_w = 0.52 * inch
             logo_h = 0.16 * inch
@@ -118,15 +120,19 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                 mask="auto",
             )
 
-        # MD & CE (top-right)
+        # ==========================================================
+        # RIGHT COLUMN REGULATORY STACK (SINGLE CURSOR)
+        # ==========================================================
+        reg_y = y
         symbol_size = 0.12 * inch
         right_x = LABEL_WIDTH - right_margin - symbol_size
 
+        # MD + CE
         if ce_mark:
             c.drawImage(
                 ce_mark,
                 right_x,
-                y - symbol_size,
+                reg_y - symbol_size,
                 width=symbol_size,
                 height=symbol_size,
                 preserveAspectRatio=True,
@@ -137,33 +143,36 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.drawImage(
                 md_symbol,
                 right_x - symbol_size - 0.03 * inch,
-                y - symbol_size,
+                reg_y - symbol_size,
                 width=symbol_size,
                 height=symbol_size,
                 preserveAspectRatio=True,
                 mask="auto",
             )
 
-        # Spec symbols BELOW MD/CE, right column
+        reg_y -= symbol_size + 0.06 * inch
+
+        # Spec symbols (part of regulatory column)
         if spec_symbols:
             spec_w = 0.82 * inch
             spec_h = 0.13 * inch
             c.drawImage(
                 spec_symbols,
                 split_x + 0.05 * inch,
-                y - symbol_size - spec_h - 0.04 * inch,
+                reg_y - spec_h,
                 width=spec_w,
                 height=spec_h,
                 preserveAspectRatio=True,
                 mask="auto",
             )
+            reg_y -= spec_h + 0.10 * inch
 
-        y -= 0.30 * inch
+        # ==========================================================
+        # MIDDLE SECTION
+        # ==========================================================
+        middle_top = reg_y
 
-        # ================= MIDDLE SECTION =================
-        middle_top = y
-
-        # LEFT: product names
+        # LEFT: Product names
         left_y = middle_top
         c.setFont("Helvetica-Bold", 6)
         c.drawString(left_margin, left_y, product["name_de"])
@@ -177,22 +186,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, left_y, product["name_it"])
         left_y -= 8
 
-        # LEFT: descriptions (NOT bold)
-        left_y = draw_wrapped_text(
-            c, product["description_de"], left_margin, left_y, left_column_width
-        )
+        # LEFT: Descriptions (NOT bold)
+        left_y = draw_wrapped_text(c, product["description_de"], left_margin, left_y, left_column_width)
         left_y -= 3
-        left_y = draw_wrapped_text(
-            c, product["description_en"], left_margin, left_y, left_column_width
-        )
+        left_y = draw_wrapped_text(c, product["description_en"], left_margin, left_y, left_column_width)
         left_y -= 3
-        left_y = draw_wrapped_text(
-            c, product["description_fr"], left_margin, left_y, left_column_width
-        )
+        left_y = draw_wrapped_text(c, product["description_fr"], left_margin, left_y, left_column_width)
         left_y -= 3
-        draw_wrapped_text(
-            c, product["description_it"], left_margin, left_y, left_column_width
-        )
+        left_y = draw_wrapped_text(c, product["description_it"], left_margin, left_y, left_column_width)
 
         # RIGHT: GTIN / LOT / SN
         right_y = middle_top
@@ -207,7 +208,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.drawImage(
                 udi_symbol,
                 symbol_x,
-                right_y - 0.07 * inch,
+                right_y - 0.10 * inch,
                 width=0.12 * inch,
                 height=0.12 * inch,
                 preserveAspectRatio=True,
@@ -222,7 +223,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.drawImage(
                 manufacturer_symbol,
                 symbol_x,
-                right_y - 0.07 * inch,
+                right_y - 0.10 * inch,
                 width=0.12 * inch,
                 height=0.12 * inch,
                 preserveAspectRatio=True,
@@ -236,7 +237,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.drawImage(
                 sn_symbol,
                 symbol_x,
-                right_y - 0.07 * inch,
+                right_y - 0.10 * inch,
                 width=0.12 * inch,
                 height=0.12 * inch,
                 preserveAspectRatio=True,
@@ -245,10 +246,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         c.drawString(text_x, right_y, f"(21){serial}")
 
-        # ================= BOTTOM SECTION =================
-        bottom_top = LABEL_HEIGHT - 1.45 * inch
+        # ==========================================================
+        # BOTTOM SECTION (DERIVED FROM FLOW)
+        # ==========================================================
+        bottom_top = min(left_y, right_y) - 0.30 * inch
 
-        # LEFT: Manufacturer & EC REP (de-emphasized)
+        # LEFT: Manufacturer + EC REP
         bl_y = bottom_top
         text_x = left_margin
 
@@ -298,7 +301,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         bl_y -= 6
         c.drawString(text_x, bl_y, product["distributor"]["address_line2"])
 
-        # RIGHT: QR code (smaller, calmer)
+        # RIGHT: QR code
         qr_size = 0.85 * inch
         qr_px = int(qr_size * 2.8)
         qr_img = generate_qr_code(udi_payload, qr_px)
@@ -306,7 +309,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawImage(
             qr_img,
             split_x + 0.08 * inch,
-            bottom_top - qr_size - 0.02 * inch,
+            bottom_top - qr_size,
             width=qr_size,
             height=qr_size,
         )
@@ -325,16 +328,14 @@ def main():
     args = parser.parse_args()
 
     product = json.loads(args.product_json)
-
     os.makedirs("output", exist_ok=True)
-    pdf = "output/UDI_labels.pdf"
 
     create_label_pdf(
         product,
         args.mfg_date,
         args.serial_start,
         args.count,
-        pdf,
+        "output/UDI_labels.pdf",
     )
 
 
