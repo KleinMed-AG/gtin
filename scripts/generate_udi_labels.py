@@ -82,19 +82,19 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === LEFT COLUMN ===
         left_y = LABEL_HEIGHT - top_margin
         
-        # Logo (increased size, more whitespace)
+        # Logo (increased by 15%)
         if logo:
-            logo_w = 0.75 * inch  # Increased from 0.65
-            logo_h = 0.22 * inch  # Increased proportionally
+            logo_w = 0.86 * inch  # Increased 15% from 0.75
+            logo_h = 0.25 * inch  # Increased proportionally
             c.drawImage(logo, left_margin, left_y - logo_h, 
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
-            left_y -= (logo_h + 0.16 * inch)  # More whitespace (from 0.12)
+            left_y -= (logo_h + 0.16 * inch)
         
-        # Product title block (all bold, same size, reduced font, tighter spacing)
-        c.setFont("Helvetica-Bold", 6)  # Reduced from 6.5, all bold
+        # Product title block (all bold, reduced by 1pt)
+        c.setFont("Helvetica-Bold", 5)  # Reduced from 6
         c.drawString(left_margin, left_y, product["name_de"])
-        left_y -= 6  # Tighter spacing (from 7)
+        left_y -= 6
         
         c.drawString(left_margin, left_y, product["name_en"])
         left_y -= 6
@@ -103,9 +103,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, left_y, product["name_it"])
         left_y -= 8
         
-        # Indication paragraph (smaller font, tighter spacing)
-        c.setFont("Helvetica", 5)  # Reduced from 5.5
-        line_spacing = 5.5  # Tighter (from 6)
+        # Indication paragraph (reduced by 1pt)
+        c.setFont("Helvetica", 4)  # Reduced from 5
+        line_spacing = 5.5
         
         c.drawString(left_margin, left_y, product["description_de"][:80])
         left_y -= line_spacing
@@ -116,38 +116,38 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, left_y, product["description_it"][:80])
         left_y -= 14
         
-        # Manufacturer block (larger icons, smaller font, regular weight)
-        icon_size = 0.12 * inch  # Increased from 0.10
+        # Manufacturer block (larger icons by 15%, smaller text by 1pt)
+        icon_size = 0.14 * inch  # Increased 15% from 0.12
         icon_text_gap = 0.04 * inch
         
         if manufacturer_symbol:
-            c.drawImage(manufacturer_symbol, left_margin, left_y - 0.07 * inch,
+            c.drawImage(manufacturer_symbol, left_margin, left_y - 0.08 * inch,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
         text_x = left_margin + icon_size + icon_text_gap
-        c.setFont("Helvetica", 5)  # Regular (not bold), reduced from 5.5
+        c.setFont("Helvetica", 4)  # Reduced from 5
         c.drawString(text_x, left_y, product["manufacturer"]["name"])
-        left_y -= 6.5  # Reduced from 7
+        left_y -= 6.5
         
-        c.setFont("Helvetica", 4.5)  # Reduced from 5
+        c.setFont("Helvetica", 3.5)  # Reduced from 4.5
         c.drawString(text_x, left_y, product["manufacturer"]["address_line1"])
         left_y -= 6
         c.drawString(text_x, left_y, product["manufacturer"]["address_line2"])
         left_y -= 8
         
-        # EC REP block (larger icon, regular weight)
+        # EC REP block (larger icon by 15%)
         if ec_rep_symbol:
-            c.drawImage(ec_rep_symbol, left_margin, left_y - 0.07 * inch,
+            c.drawImage(ec_rep_symbol, left_margin, left_y - 0.08 * inch,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
         text_x = left_margin + icon_size + icon_text_gap
-        c.setFont("Helvetica", 5)  # Regular (not bold)
+        c.setFont("Helvetica", 4)  # Reduced from 5
         c.drawString(text_x, left_y, product["distributor"]["name"])
         left_y -= 6.5
         
-        c.setFont("Helvetica", 4.5)
+        c.setFont("Helvetica", 3.5)  # Reduced from 4.5
         c.drawString(text_x, left_y, product["distributor"]["address_line1"])
         left_y -= 6
         
@@ -163,7 +163,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === RIGHT COLUMN ===
         right_y = LABEL_HEIGHT - top_margin
         
-        # Regulatory symbols (horizontal line)
+        # Regulatory symbols
         symbol_row_y = right_y - 0.02 * inch
         symbol_size = 0.13 * inch
         symbol_spacing = 0.04 * inch
@@ -182,10 +182,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
             current_x -= (symbol_size + symbol_spacing)
         
-        # Spec symbols (scaled up to match original)
+        # Spec symbols (increased by 12%)
         if spec_symbols:
-            spec_w = 1.00 * inch  # Increased from 0.85
-            spec_h = 0.14 * inch  # Increased from 0.12
+            spec_w = 1.12 * inch  # Increased 12% from 1.00
+            spec_h = 0.16 * inch  # Increased proportionally
             spec_x = current_x - spec_w
             c.drawImage(spec_symbols, spec_x, symbol_row_y - symbol_size,
                        width=spec_w, height=spec_h,
@@ -193,9 +193,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_y -= 0.28 * inch
         
-        # GTIN/LOT/SN blocks (smaller numbers, tighter spacing)
-        block_spacing = 10  # Reduced from 12
-        label_value_gap = 5  # Reduced from 6
+        # GTIN/LOT/SN blocks (numbers reduced by 22%)
+        block_spacing = 10
+        label_value_gap = 5
         identifier_x = right_column_left
         icon_size = 0.11 * inch
         icon_x = identifier_x - 0.14 * inch
@@ -210,7 +210,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 6.5)  # Reduced from 7.5
+        c.setFont("Helvetica", 5)  # Reduced 22% from 6.5
         c.drawString(identifier_x, right_y, f"(01){product['gtin']}")
         right_y -= block_spacing
         
@@ -224,7 +224,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 6.5)
+        c.setFont("Helvetica", 5)
         c.drawString(identifier_x, right_y, f"(11){mfg_date}")
         right_y -= block_spacing
         
@@ -238,27 +238,25 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 6.5)
+        c.setFont("Helvetica", 5)
         c.drawString(identifier_x, right_y, f"(21){serial}")
         
-        # QR CODE (smaller, shifted right, UDI icon aligned with top-left corner)
-        qr_size = 0.72 * inch  # Further reduced from 0.78
+        # QR CODE
+        qr_size = 0.72 * inch
         qr_size_px = int(qr_size * 2.8)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
-        # Position: shifted further right
-        qr_x = LABEL_WIDTH - right_margin - qr_size + 0.08 * inch  # More shift (from 0.05)
+        qr_x = LABEL_WIDTH - right_margin - qr_size + 0.08 * inch
         qr_y = bottom_margin
         
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size, height=qr_size)
         
-        # Move UDI icon to align with QR top-left corner
-        if udi_symbol:
-            udi_icon_y = qr_y + qr_size - 0.11 * inch  # Aligned with QR top
-            c.drawImage(udi_symbol, icon_x, udi_icon_y,
-                       width=icon_size, height=icon_size,
-                       preserveAspectRatio=True, mask="auto")
+        # UDI label - move down so vertical centerline aligns with QR vertical middle
+        udi_label_y = qr_y + (qr_size / 2) - 0.05 * inch  # Centered on QR middle
+        
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawString(identifier_x, udi_label_y, "UDI")
 
     c.save()
     print(f"✓ PDF created: {output_file}")
