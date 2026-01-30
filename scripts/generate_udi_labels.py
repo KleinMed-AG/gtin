@@ -46,7 +46,7 @@ def load_image_safe(path):
     return None
 
 def create_label_pdf(product, mfg_date, serial_start, count, output_file):
-    """Create PDF following strict two-column grid system"""
+    """Create PDF matching original exactly"""
     c = canvas.Canvas(output_file, pagesize=(LABEL_WIDTH, LABEL_HEIGHT))
 
     # Load assets
@@ -59,18 +59,17 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     udi_symbol = load_image_safe("assets/image14.png")
     spec_symbols = load_image_safe("assets/Screenshot 2026-01-28 100951.png")
 
-    # STRICT GRID SYSTEM
+    # Layout parameters (aligned with original)
     left_margin = 0.15 * inch
     top_margin = 0.14 * inch
-    right_margin = 0.15 * inch
+    right_margin = 0.18 * inch  # Increased slightly
     bottom_margin = 0.14 * inch
     
-    # Two-column grid: 60-65% left, 35-40% right
+    # Two-column grid
     usable_width = LABEL_WIDTH - left_margin - right_margin
     left_column_width = usable_width * 0.62
     column_gap = 0.10 * inch
     right_column_left = left_margin + left_column_width + column_gap
-    right_column_width = usable_width - left_column_width - column_gap
 
     for i in range(count):
         serial = serial_start + i
@@ -83,34 +82,31 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === LEFT COLUMN ===
         left_y = LABEL_HEIGHT - top_margin
         
-        # Logo (reduced size by 15%, more top padding)
+        # Logo (increased size)
         if logo:
-            logo_w = 0.55 * inch  # Reduced from 0.65
-            logo_h = 0.16 * inch  # Reduced proportionally
+            logo_w = 0.65 * inch  # Increased from 0.55
+            logo_h = 0.19 * inch  # Increased proportionally
             c.drawImage(logo, left_margin, left_y - logo_h, 
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
-            left_y -= (logo_h + 0.08 * inch)  # More breathing room
+            left_y -= (logo_h + 0.12 * inch)  # More whitespace below logo
         
-        # Product name block (strong hierarchy)
-        c.setFont("Helvetica-Bold", 6.5)  # Bold for main name
+        # Product title block (reduced font weight, fixed spacing)
+        c.setFont("Helvetica", 6.5)  # Changed from Bold to Regular
         c.drawString(left_margin, left_y, product["name_de"])
-        left_y -= 7.5
+        left_y -= 7  # Tighter spacing
         
-        c.setFont("Helvetica", 5.5)  # Regular for translations
+        c.setFont("Helvetica", 5.5)
         c.drawString(left_margin, left_y, product["name_en"])
         left_y -= 6.5
         c.drawString(left_margin, left_y, product["name_fr"])
         left_y -= 6.5
         c.drawString(left_margin, left_y, product["name_it"])
-        left_y -= 12  # Clear separation before indication
+        left_y -= 8  # Less separation before indication (moved up)
         
-        # Indication block (regular weight, not bold-heavy)
-        c.setFont("Helvetica", 5.5)  # Regular, not bold
-        line_spacing = 6.5
-        
-        # Constrain to left column width
-        max_text_width = left_column_width - 0.05 * inch
+        # Indication paragraph (moved up, tighter line spacing)
+        c.setFont("Helvetica", 5.5)
+        line_spacing = 6  # Tightened from 6.5
         
         c.drawString(left_margin, left_y, product["description_de"][:80])
         left_y -= line_spacing
@@ -119,31 +115,32 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, left_y, product["description_fr"][:80])
         left_y -= line_spacing
         c.drawString(left_margin, left_y, product["description_it"][:80])
-        left_y -= 16  # Increased spacing before manufacturer
+        left_y -= 14
         
-        # Manufacturer block (smaller font, clean icon alignment)
+        # Manufacturer block (icon aligned with first line)
         icon_size = 0.10 * inch
         icon_text_gap = 0.04 * inch
         
+        # Draw icon aligned with text baseline
         if manufacturer_symbol:
-            c.drawImage(manufacturer_symbol, left_margin, left_y - icon_size + 2,
+            c.drawImage(manufacturer_symbol, left_margin, left_y - 0.06 * inch,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
         text_x = left_margin + icon_size + icon_text_gap
-        c.setFont("Helvetica-Bold", 5.5)  # Reduced from 6
+        c.setFont("Helvetica-Bold", 5.5)
         c.drawString(text_x, left_y, product["manufacturer"]["name"])
         left_y -= 7
         
-        c.setFont("Helvetica", 5)  # Small regular
+        c.setFont("Helvetica", 5)
         c.drawString(text_x, left_y, product["manufacturer"]["address_line1"])
         left_y -= 6.5
         c.drawString(text_x, left_y, product["manufacturer"]["address_line2"])
-        left_y -= 10  # Clear separation before EC REP
+        left_y -= 8  # Reduced spacing between companies (from 10)
         
-        # EC REP block (visually distinct)
+        # EC REP block (icon aligned with first line)
         if ec_rep_symbol:
-            c.drawImage(ec_rep_symbol, left_margin, left_y - icon_size + 2,
+            c.drawImage(ec_rep_symbol, left_margin, left_y - 0.06 * inch,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
@@ -168,12 +165,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === RIGHT COLUMN ===
         right_y = LABEL_HEIGHT - top_margin
         
-        # Regulatory symbols (horizontal band, equal size)
+        # Regulatory symbols (one straight horizontal line)
         symbol_row_y = right_y - 0.02 * inch
         symbol_size = 0.13 * inch
         symbol_spacing = 0.04 * inch
         
-        # Start from right edge and work backwards
+        # Position all icons in one horizontal line from right
         current_x = LABEL_WIDTH - right_margin - symbol_size
         
         if ce_mark:
@@ -188,20 +185,20 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
             current_x -= (symbol_size + symbol_spacing)
         
-        # Spec symbols (temp/thickness/IFU) in same row
+        # Spec symbols in same horizontal line
         if spec_symbols:
             spec_w = 0.85 * inch
             spec_h = 0.12 * inch
             spec_x = current_x - spec_w
-            c.drawImage(spec_symbols, spec_x, symbol_row_y - spec_h - 0.01 * inch,
+            c.drawImage(spec_symbols, spec_x, symbol_row_y - symbol_size,
                        width=spec_w, height=spec_h,
                        preserveAspectRatio=True, mask="auto")
         
-        right_y -= 0.26 * inch
+        right_y -= 0.28 * inch
         
-        # GTIN/LOT/SN blocks (strict vertical rhythm)
-        block_spacing = 13
-        label_value_gap = 8
+        # GTIN/LOT/SN blocks (reduced spacing between labels and numbers)
+        block_spacing = 12
+        label_value_gap = 6  # Reduced from 8
         identifier_x = right_column_left
         icon_size = 0.11 * inch
         icon_x = identifier_x - 0.14 * inch
@@ -220,7 +217,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(identifier_x, right_y, f"(01){product['gtin']}")
         right_y -= block_spacing
         
-        # LOT block (manufacturing date)
+        # LOT block
         c.setFont("Helvetica-Bold", 6.5)
         c.drawString(identifier_x, right_y, "LOT")
         right_y -= label_value_gap
@@ -234,7 +231,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(identifier_x, right_y, f"(11){mfg_date}")
         right_y -= block_spacing
         
-        # SN block (serial number)
+        # SN block
         c.setFont("Helvetica-Bold", 6.5)
         c.drawString(identifier_x, right_y, "SN")
         right_y -= label_value_gap
@@ -247,14 +244,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.setFont("Helvetica", 7.5)
         c.drawString(identifier_x, right_y, f"(21){serial}")
         
-        # QR CODE (reduced size, aligned, breathing space)
-        qr_size = 0.85 * inch  # Reduced from 0.95
+        # QR CODE (reduced 17.5%, moved down, shifted right, more spacing)
+        qr_size = 0.78 * inch  # Reduced by ~18% from 0.95
         qr_size_px = int(qr_size * 2.8)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
-        # Bottom-right, aligned with right column
-        qr_x = LABEL_WIDTH - right_margin - qr_size
-        qr_y = bottom_margin + 0.08 * inch
+        # Position: lower, shifted right
+        qr_x = LABEL_WIDTH - right_margin - qr_size + 0.05 * inch  # Shifted right
+        qr_y = bottom_margin  # Lower position
         
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size, height=qr_size)
