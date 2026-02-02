@@ -83,7 +83,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === LEFT COLUMN ===
         left_y = LABEL_HEIGHT - top_margin
         
-        # Logo - matching Original
+        # Logo - matching Original exactly
         if logo:
             logo_w = 0.78 * inch
             logo_h = 0.22 * inch
@@ -122,9 +122,6 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         icon_size = 0.22 * inch
         icon_text_gap = 0.06 * inch
         
-        # Store the text starting position
-        manufacturer_text_y = left_y
-        
         if manufacturer_symbol:
             # Align icon vertically centered with manufacturer name text
             c.drawImage(manufacturer_symbol, left_margin, left_y - 0.03 * inch,
@@ -143,8 +140,6 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         left_y -= 10
         
         # EC REP block - matching Original
-        ec_rep_text_y = left_y
-        
         if ec_rep_symbol:
             # Align icon vertically centered with EC REP name text
             c.drawImage(ec_rep_symbol, left_margin, left_y - 0.03 * inch,
@@ -172,23 +167,24 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === RIGHT COLUMN ===
         right_y = LABEL_HEIGHT - top_margin
         
-        # Regulatory symbols - matching Original exactly
+        # Regulatory symbols row - matching Original exactly
         symbol_row_y = right_y + 0.02 * inch
         
-        # MD symbol size (reference for spec symbols height)
+        # MD symbol size (reference)
         md_size = 0.18 * inch
         
-        # Spec symbols (leftmost) - sized to match MD height and moved left
+        # Spec symbols - positioned centered, matching MD height
         if spec_symbols:
-            spec_h = md_size  # Match MD symbol height
+            spec_h = md_size
             spec_w = 1.03 * inch
-            spec_x = right_column_left - 0.05 * inch
+            # Center the spec symbols in available space
+            spec_x = right_column_left + 0.15 * inch
             c.drawImage(spec_symbols, spec_x, symbol_row_y - spec_h,
                        width=spec_w, height=spec_h,
                        preserveAspectRatio=True, mask="auto")
         
-        # MD symbol with border - positioned after spec symbols with gap
-        md_x = spec_x + spec_w + 0.08 * inch  # Position MD after spec symbols with gap
+        # MD symbol with border - positioned with proper gap after spec symbols
+        md_x = spec_x + spec_w + 0.15 * inch
         
         # Draw MD border
         c.setLineWidth(0.8)
@@ -200,7 +196,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=md_size, height=md_size,
                        preserveAspectRatio=True, mask="auto")
         
-        # CE mark - matching Original
+        # CE mark - positioned at far right
         ce_size = 0.20 * inch
         ce_x = LABEL_WIDTH - right_margin - ce_size - 0.02 * inch
         
@@ -214,17 +210,17 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # GTIN/LOT/SN blocks - matching Original exactly
         block_spacing = 11
         
-        # Icon parameters
-        icon_size_small = 0.13 * inch
-        icon_x = right_column_left + 0.30 * inch
+        # Icon parameters - properly sized and positioned
+        icon_size_small = 0.14 * inch
+        icon_x = right_column_left + 0.48 * inch
         
-        # Align GTIN text with the icon position (left edge alignment)
-        identifier_x = icon_x
-        value_x = identifier_x + 0.10 * inch
+        # Text positioning
+        label_x = icon_x + icon_size_small + 0.06 * inch
+        value_x = label_x + 0.35 * inch
         
-        # GTIN block
+        # GTIN block - NO ICON, just label and value
         c.setFont("Helvetica-Bold", 7)
-        c.drawString(identifier_x, right_y, "GTIN")
+        c.drawString(label_x, right_y, "GTIN")
         
         c.setFont("Helvetica", 5.5)
         c.drawString(value_x, right_y, f"(01){product['gtin']}")
@@ -232,7 +228,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # LOT/Manufacturing date block with icon
         if manufacturer_symbol_empty:
-            c.drawImage(manufacturer_symbol_empty, icon_x, right_y - 0.065 * inch,
+            c.drawImage(manufacturer_symbol_empty, icon_x, right_y - 0.07 * inch,
                        width=icon_size_small, height=icon_size_small,
                        preserveAspectRatio=True, mask="auto")
         
@@ -241,23 +237,26 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         right_y -= block_spacing
         
         # SN block with icon and border - matching Original
-        sn_box_x = identifier_x - 0.04 * inch
+        # Draw SN border first
+        sn_box_x = label_x - 0.04 * inch
         sn_box_y = right_y - 0.08 * inch
-        sn_box_w = 0.28 * inch
+        sn_box_w = 0.30 * inch
         sn_box_h = 0.14 * inch
         
-        # Draw SN border
         c.setLineWidth(1.2)
         c.rect(sn_box_x, sn_box_y, sn_box_w, sn_box_h)
         
+        # SN label
         c.setFont("Helvetica-Bold", 6.5)
-        c.drawString(identifier_x, right_y, "SN")
+        c.drawString(label_x, right_y, "SN")
         
+        # SN icon
         if sn_symbol:
-            c.drawImage(sn_symbol, icon_x, right_y - 0.065 * inch,
+            c.drawImage(sn_symbol, icon_x, right_y - 0.07 * inch,
                        width=icon_size_small, height=icon_size_small,
                        preserveAspectRatio=True, mask="auto")
         
+        # SN value
         c.setFont("Helvetica", 5.5)
         c.drawString(value_x, right_y, f"(21){serial}")
         
@@ -272,18 +271,19 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size, height=qr_size)
         
-        # UDI label with border - matching Original position, LEFT of QR code
-        udi_box_x = identifier_x - 0.04 * inch
+        # UDI label with border - LEFT of QR code, matching Original
+        udi_box_x = label_x - 0.04 * inch
         udi_box_y = qr_y + (qr_size / 2) - 0.08 * inch
-        udi_box_w = 0.34 * inch
+        udi_box_w = 0.36 * inch
         udi_box_h = 0.14 * inch
         
         # Draw UDI border
         c.setLineWidth(1.2)
         c.rect(udi_box_x, udi_box_y, udi_box_w, udi_box_h)
         
+        # UDI text
         c.setFont("Helvetica-Bold", 7)
-        c.drawString(identifier_x, udi_box_y + 0.04 * inch, "UDI")
+        c.drawString(label_x, udi_box_y + 0.04 * inch, "UDI")
 
     c.save()
     print(f"✓ PDF created: {output_file}")
