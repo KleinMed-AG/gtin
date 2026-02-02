@@ -7,14 +7,17 @@
     {
       "source": "/api/download",
       "destination": "/api/download.js"
-    },
+    }
+  ],
+  "headers": [
     {
-      "source": "/api/auth-check",
-      "destination": "/api/auth-check.js"
-    },
-    {
-      "source": "/",
-      "destination": "/index.html"
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "WWW-Authenticate",
+          "value": "Basic realm=\"Secure Area\""
+        }
+      ]
     }
   ]
 }
