@@ -2,76 +2,57 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UDI Label Generator - Login</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-        }
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            text-align: center;
-        }
-        button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-        button:hover {
-            background: #5568d3;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-        }
-    </style>
+    <title>Login - UDI Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="login-box">
-        <h1>🔒 UDI Generator</h1>
-        <p>Bitte anmelden</p>
-        <button onclick="login()">Anmelden</button>
-        <div id="error" class="error"></div>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center">
+    <div id="login-screen" class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+        <h1 class="text-2xl font-bold mb-6">🔒 UDI Generator Login</h1>
+        <input type="text" id="username" placeholder="Benutzername" class="w-full p-3 border rounded mb-3">
+        <input type="password" id="password" placeholder="Passwort" class="w-full p-3 border rounded mb-4">
+        <button onclick="checkLogin()" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">
+            Anmelden
+        </button>
+        <p id="error" class="text-red-600 mt-3 text-sm"></p>
     </div>
 
+    <div id="app-screen" style="display:none;" class="w-full"></div>
+
     <script>
-        async function login() {
-            const username = prompt('Benutzername:');
-            const password = prompt('Passwort:');
+        // Simple hardcoded check (change these!)
+        const VALID_USER = 'admin';
+        const VALID_PASS = 'SecurePass123!';
+
+        function checkLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
             
-            if (!username || !password) return;
-
-            try {
-                const response = await fetch('/api/auth-check', {
-                    headers: {
-                        'Authorization': 'Basic ' + btoa(username + ':' + password)
-                    }
-                });
-
-                if (response.ok) {
-                    // Store auth in sessionStorage
-                    sessionStorage.setItem('auth', btoa(username + ':' + password));
-                    window.location.href = '/protected.html';
-                } else {
-                    document.getElementById('error').textContent = 'Falscher Benutzername oder Passwort';
-                }
-            } catch (e) {
-                document.getElementById('error').textContent = 'Fehler bei der Anmeldung';
+            if (user === VALID_USER && pass === VALID_PASS) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-screen').style.display = 'block';
+                loadApp();
+            } else {
+                document.getElementById('error').textContent = 'Ungültige Anmeldedaten';
             }
+        }
+
+        function loadApp() {
+            // Load your actual app content
+            fetch('/app.html')
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('app-screen').innerHTML = html;
+                    // Re-execute scripts
+                    const scripts = document.getElementById('app-screen').querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach(attr => 
+                            newScript.setAttribute(attr.name, attr.value)
+                        );
+                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+                });
         }
     </script>
 </body>
