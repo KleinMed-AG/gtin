@@ -122,7 +122,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         icon_text_gap = 0.04 * inch
         
         if manufacturer_symbol:
-            c.drawImage(manufacturer_symbol, left_margin, left_y - 0.08 * inch,
+            c.drawImage(manufacturer_symbol, left_margin, left_y - 0.12 * inch,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
@@ -139,7 +139,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # EC REP block (larger icon by 15%)
         if ec_rep_symbol:
-            c.drawImage(ec_rep_symbol, left_margin, left_y - 0.08 * inch,
+            c.drawImage(ec_rep_symbol, left_margin, left_y - 0.12 * inch,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
@@ -185,7 +185,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # Spec symbols (increased by 12%)
         if spec_symbols:
-            spec_w = 1.22 * inch  # Increased 12% from 1.00
+            spec_w = 2.22 * inch  # Increased 12% from 1.00
             spec_h = 0.16 * inch  # Increased proportionally
             spec_x = current_x - spec_w
             c.drawImage(spec_symbols, spec_x, symbol_row_y - symbol_size,
@@ -210,7 +210,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         #   c.drawImage(udi_symbol, icon_x, right_y - 0.06 * inch,
         #               width=icon_size, height=icon_size,
         #               preserveAspectRatio=True, mask="auto")
-        c.setFont("Helvetica-Bold", 6.5)
+        c.setFont("Helvetica-Bold", 3.5)
         right_y -= label_value_gap
         c.drawString(icon_x, right_y - 0.06 * inch, "GTIN")
         #
@@ -268,7 +268,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         #c.drawString(identifier_x, udi_label_y, "UDI")
         if udi_symbol:
            c.drawImage(udi_symbol, identifier_x, udi_label_y,
-                       width=icon_size, height=icon_size,
+                       width=2*icon_size, height=2*icon_size,
                        preserveAspectRatio=True, mask="auto")
 
     c.save()
