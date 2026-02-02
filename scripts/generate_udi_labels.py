@@ -54,7 +54,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     ce_mark = load_image_safe("assets/image2.png")
     md_symbol = load_image_safe("assets/image3.png")
     manufacturer_symbol = load_image_safe("assets/image6.png")
-    manufacturer_symbol)empty = load_image_safe("assets/image8.png")
+    manufacturer_symbol_empty = load_image_safe("assets/image8.png")
     ec_rep_symbol = load_image_safe("assets/image10.png")
     sn_symbol = load_image_safe("assets/image12.png")
     udi_symbol = load_image_safe("assets/image14.png")
@@ -228,8 +228,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         #c.drawString(identifier_x, right_y, "LOT")
         right_y -= label_value_gap
         
-        if manufacturer_symbol:
-            c.drawImage(manufacturer_symbol, icon_x, right_y - 0.06 * inch,
+        if manufacturer_symbol_empty:
+            c.drawImage(manufacturer_symbol_empty, icon_x, right_y - 0.06 * inch,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
