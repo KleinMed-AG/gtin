@@ -54,6 +54,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     ce_mark = load_image_safe("assets/image2.png")
     md_symbol = load_image_safe("assets/image3.png")
     manufacturer_symbol = load_image_safe("assets/image6.png")
+    manufacturer_symbol)empty = load_image_safe("assets/image8.png")
     ec_rep_symbol = load_image_safe("assets/image10.png")
     sn_symbol = load_image_safe("assets/image12.png")
     udi_symbol = load_image_safe("assets/image14.png")
@@ -117,7 +118,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         left_y -= 14
         
         # Manufacturer block (larger icons by 15%, smaller text by 1pt)
-        icon_size = 0.14 * inch  # Increased 15% from 0.12
+        icon_size = 0.24 * inch  # Increased 15% from 0.12
         icon_text_gap = 0.04 * inch
         
         if manufacturer_symbol:
@@ -165,7 +166,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # Regulatory symbols
         symbol_row_y = right_y - 0.02 * inch
-        symbol_size = 0.13 * inch
+        symbol_size = 0.23 * inch
         symbol_spacing = 0.04 * inch
         
         current_x = LABEL_WIDTH - right_margin - symbol_size
@@ -184,7 +185,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # Spec symbols (increased by 12%)
         if spec_symbols:
-            spec_w = 1.12 * inch  # Increased 12% from 1.00
+            spec_w = 1.22 * inch  # Increased 12% from 1.00
             spec_h = 0.16 * inch  # Increased proportionally
             spec_x = current_x - spec_w
             c.drawImage(spec_symbols, spec_x, symbol_row_y - symbol_size,
@@ -201,14 +202,22 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         icon_x = identifier_x - 0.14 * inch
         
         # GTIN block
+        #c.setFont("Helvetica-Bold", 6.5)
+        #c.drawString(identifier_x, right_y, "GTIN")
+        #right_y -= label_value_gap
+        #
+        #if udi_symbol:
+        #   c.drawImage(udi_symbol, icon_x, right_y - 0.06 * inch,
+        #               width=icon_size, height=icon_size,
+        #               preserveAspectRatio=True, mask="auto")
         c.setFont("Helvetica-Bold", 6.5)
-        c.drawString(identifier_x, right_y, "GTIN")
         right_y -= label_value_gap
-        
-        if udi_symbol:
-            c.drawImage(udi_symbol, icon_x, right_y - 0.06 * inch,
-                       width=icon_size, height=icon_size,
-                       preserveAspectRatio=True, mask="auto")
+        c.drawString(icon_x, right_y - 0.06 * inch, "GTIN")
+        #
+        #if udi_symbol:
+        #   c.drawImage(udi_symbol, icon_x, right_y - 0.06 * inch,
+        #               width=icon_size, height=icon_size,
+        #               preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", 5)  # Reduced 22% from 6.5
         c.drawString(identifier_x, right_y, f"(01){product['gtin']}")
@@ -216,7 +225,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # LOT block
         c.setFont("Helvetica-Bold", 6.5)
-        c.drawString(identifier_x, right_y, "LOT")
+        #c.drawString(identifier_x, right_y, "LOT")
         right_y -= label_value_gap
         
         if manufacturer_symbol:
@@ -230,7 +239,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # SN block
         c.setFont("Helvetica-Bold", 6.5)
-        c.drawString(identifier_x, right_y, "SN")
+        #c.drawString(identifier_x, right_y, "SN")
         right_y -= label_value_gap
         
         if sn_symbol:
@@ -256,7 +265,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         udi_label_y = qr_y + (qr_size / 2) - 0.05 * inch  # Centered on QR middle
         
         c.setFont("Helvetica-Bold", 6.5)
-        c.drawString(identifier_x, udi_label_y, "UDI")
+        #c.drawString(identifier_x, udi_label_y, "UDI")
+        if udi_symbol:
+           c.drawImage(udi_symbol, identifier_x, udi_label_y,
+                       width=icon_size, height=icon_size,
+                       preserveAspectRatio=True, mask="auto")
 
     c.save()
     print(f"✓ PDF created: {output_file}")
