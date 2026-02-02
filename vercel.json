@@ -1,10 +1,4 @@
 {
-  "functions": {
-    "api/**/*.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
     {
       "source": "/api/trigger",
@@ -13,6 +7,10 @@
     {
       "source": "/api/download",
       "destination": "/api/download.js"
+    },
+    {
+      "source": "/api/auth-check",
+      "destination": "/api/auth-check.js"
     },
     {
       "source": "/",
