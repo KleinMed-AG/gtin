@@ -57,7 +57,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     manufacturer_symbol_empty = load_image_safe("assets/image8.png")  # FIX 4: Use image8 for LOT
     ec_rep_symbol = load_image_safe("assets/image10.png")
     sn_symbol = load_image_safe("assets/image12.png")
-    udi_symbol = load_image_safe("assets/image14.png")  # FIX 1: Will use next to QR
+    udi_symbol = load_image_safe("assets/image14.png")  # FIX 1: Use next to QR
     spec_symbols = load_image_safe("assets/Screenshot 2026-01-28 100951.png")
 
     # Layout parameters
@@ -198,32 +198,36 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         icon_size_small = 0.11 * inch
         icon_x = identifier_x + 0.32 * inch  # Position for icons (LOT and SN)
         
-        # FIX 2: GTIN block - label LEFT of number, no icon
+        # FIX 2: GTIN block - "GTIN" text LEFT of number (before it)
         c.setFont("Helvetica-Bold", 6.5)
+        gtin_label_width = c.stringWidth("GTIN", "Helvetica-Bold", 6.5)
         c.drawString(identifier_x, right_y, "GTIN")
         
         c.setFont("Helvetica", 5)
-        c.drawString(identifier_x + 0.35 * inch, right_y, f"(01){product['gtin']}")
+        # Position GTIN number after the label with small gap
+        c.drawString(identifier_x + gtin_label_width + 0.05 * inch, right_y, f"(01){product['gtin']}")
         right_y -= block_spacing
         
         # FIX 3 & 4: LOT block - NO "LOT" text, just icon (image8) and value
         if manufacturer_symbol_empty:
-            c.drawImage(manufacturer_symbol_empty, icon_x, right_y - 0.06 * inch,
+            c.drawImage(manufacturer_symbol_empty, identifier_x, right_y - 0.06 * inch,
                        width=icon_size_small, height=icon_size_small,
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", 5)
-        c.drawString(identifier_x + 0.46 * inch, right_y, f"(11){mfg_date}")
+        # Position LOT value after icon
+        c.drawString(identifier_x + icon_size_small + 0.05 * inch, right_y, f"(11){mfg_date}")
         right_y -= block_spacing
         
         # FIX 5: SN block - NO "SN" text, just icon and value
         if sn_symbol:
-            c.drawImage(sn_symbol, icon_x, right_y - 0.06 * inch,
+            c.drawImage(sn_symbol, identifier_x, right_y - 0.06 * inch,
                        width=icon_size_small, height=icon_size_small,
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", 5)
-        c.drawString(identifier_x + 0.46 * inch, right_y, f"(21){serial}")
+        # Position SN value after icon
+        c.drawString(identifier_x + icon_size_small + 0.05 * inch, right_y, f"(21){serial}")
         
         # QR CODE
         qr_size = 0.72 * inch
@@ -236,12 +240,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size, height=qr_size)
         
-        # FIX 1: UDI - use image14.png icon instead of text, position next to QR
-        udi_icon_y = qr_y + (qr_size / 2) - 0.05 * inch
-        udi_icon_size = 0.22 * inch  # Larger icon size for UDI
+        # FIX 1: UDI - use image14.png icon next to QR code (no text)
+        udi_icon_y = qr_y + (qr_size / 2)
+        udi_icon_size = 0.22 * inch
         
         if udi_symbol:
-            c.drawImage(udi_symbol, identifier_x, udi_icon_y - (udi_icon_size / 2),
+            # Position UDI icon to the left of QR code, vertically centered
+            udi_icon_x = qr_x - udi_icon_size - 0.08 * inch
+            c.drawImage(udi_symbol, udi_icon_x, udi_icon_y - (udi_icon_size / 2),
                        width=udi_icon_size, height=udi_icon_size,
                        preserveAspectRatio=True, mask="auto")
 
