@@ -120,7 +120,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # Calculate text block height (3 lines: 6.5 + 6 + 6 = 18.5pt spacing)
         manufacturer_text_height = 18.5
-        manufacturer_icon_size = manufacturer_text_height / 72 * inch  # Convert points to inches
+        manufacturer_icon_size = (manufacturer_text_height / 72 * inch) * 0.85  # 15% smaller
         
         text_x = left_margin + manufacturer_icon_size + icon_text_gap
         manufacturer_start_y = left_y
@@ -146,7 +146,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block
         # Calculate text block height (3 lines: 6.5 + 6 spacing = 12.5pt)
         ec_rep_text_height = 12.5
-        ec_rep_icon_size = ec_rep_text_height / 72 * inch  # Convert points to inches
+        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.05  # 5% larger
         
         text_x = left_margin + ec_rep_icon_size + icon_text_gap
         ec_rep_start_y = left_y
@@ -211,16 +211,17 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # GTIN/LOT/SN blocks
         block_spacing = 10
         identifier_x = right_column_left
-        udi_icon_size = 0.22 * inch  # UDI icon size
+        udi_icon_size = 0.22 * inch * 0.90  # UDI icon size - 10% smaller
         icon_size_small = udi_icon_size  # Make LOT and SN same size as UDI
         
-        # FIX 2: GTIN block - "GTIN" text LEFT of number (before it), same size as UDI icon
-        gtin_font_size = 6.5  # Make GTIN text smaller, similar to UDI icon size
+        # FIX 2: GTIN block - "GTIN" text LEFT of number (before it), 10% smaller
+        gtin_font_size = 6.5 * 0.90  # 10% smaller
         c.setFont("Helvetica-Bold", gtin_font_size)
         gtin_label_width = c.stringWidth("GTIN", "Helvetica-Bold", gtin_font_size)
         c.drawString(identifier_x, right_y, "GTIN")
         
-        c.setFont("Helvetica", 5)
+        number_font_size = 5 * 0.95  # Numbers 5% smaller
+        c.setFont("Helvetica", number_font_size)
         # Position GTIN number after the label with small gap
         c.drawString(identifier_x + gtin_label_width + 0.05 * inch, right_y, f"(01){product['gtin']}")
         right_y -= block_spacing
@@ -231,7 +232,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=icon_size_small, height=icon_size_small,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 5)
+        c.setFont("Helvetica", number_font_size)
         # Position LOT value after icon
         c.drawString(identifier_x + icon_size_small + 0.05 * inch, right_y, f"(11){mfg_date}")
         right_y -= block_spacing
@@ -242,7 +243,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=icon_size_small, height=icon_size_small,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 5)
+        c.setFont("Helvetica", number_font_size)
         # Position SN value after icon
         c.drawString(identifier_x + icon_size_small + 0.05 * inch, right_y, f"(21){serial}")
         
@@ -259,7 +260,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # FIX 1: UDI - use image14.png icon next to QR code (no text)
         udi_icon_y = qr_y + (qr_size / 2)
-        udi_icon_size = 0.22 * inch
+        udi_icon_size = 0.22 * inch * 0.90  # 10% smaller
         
         if udi_symbol:
             # Position UDI icon to the left of QR code, vertically centered
