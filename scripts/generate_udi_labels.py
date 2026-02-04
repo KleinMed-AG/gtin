@@ -171,10 +171,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         c.drawString(text_x, left_y, address_line2)
         
-        # Draw EC REP icon vertically centered with the entire text block (centered now)
+        # Draw EC REP icon vertically centered with the entire text block, then move 1pt up
         # Center of text block is at start minus half the total height
         text_block_center_y = ec_rep_start_y - (ec_rep_text_height / 72 * inch / 2)
-        icon_y = text_block_center_y - (ec_rep_icon_size / 2)  # Centered (was 1pt down, now +1pt = centered)
+        icon_y = text_block_center_y - (ec_rep_icon_size / 2) + (1 / 72 * inch)  # Move 1pt up
         
         if ec_rep_symbol:
             c.drawImage(ec_rep_symbol, left_margin, icon_y,
@@ -214,8 +214,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_y -= 0.28 * inch
         
-        # Move entire GTIN/LOT/SN block 3pt down
-        right_y -= (3 / 72 * inch)
+        # Move entire GTIN/LOT/SN block 10pt down (was 3pt, now 7pt more)
+        right_y -= (10 / 72 * inch)
         
         # GTIN/LOT/SN blocks
         block_spacing = 10
@@ -258,10 +258,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Position SN value after icon with increased gap
         c.drawString(identifier_x + icon_size_small + icon_number_gap, right_y, f"(21){serial}")
         
-        # QR CODE - 20% larger while maintaining bottom and right margins
+        # QR CODE - 35% larger while maintaining bottom and right margins
         qr_size_original = 0.72 * inch
-        qr_size = qr_size_original * 1.20  # 20% larger
-        qr_size_px = int(qr_size * 6.0)  # Further increased resolution for maximum sharpness (was 4.0)
+        qr_size = qr_size_original * 1.35  # 35% larger (was 20%, increased by 15%)
+        qr_size_px = int(qr_size * 6.0)  # High resolution for maximum sharpness
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
         # Calculate position: keep right and bottom margins fixed
