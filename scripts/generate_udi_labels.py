@@ -134,10 +134,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         left_y -= 6
         c.drawString(text_x, left_y, product["manufacturer"]["address_line2"])
         
-        # Draw manufacturer icon vertically centered with the entire text block, then move 10pt up
+        # Draw manufacturer icon vertically centered with the entire text block, then move 3pt up (was 10pt up, now -7pt = 3pt up)
         # Center of text block is at start minus half the total height
         text_block_center_y = manufacturer_start_y - (manufacturer_text_height / 72 * inch / 2)
-        icon_y = text_block_center_y - (manufacturer_icon_size / 2) + (10 / 72 * inch)  # Move 10pt up
+        icon_y = text_block_center_y - (manufacturer_icon_size / 2) + (3 / 72 * inch)  # Move 3pt up
         
         if manufacturer_symbol:
             c.drawImage(manufacturer_symbol, left_margin, icon_y,
@@ -171,10 +171,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         c.drawString(text_x, left_y, address_line2)
         
-        # Draw EC REP icon vertically centered with the entire text block
+        # Draw EC REP icon vertically centered with the entire text block, then move 2pt up
         # Center of text block is at start minus half the total height
         text_block_center_y = ec_rep_start_y - (ec_rep_text_height / 72 * inch / 2)
-        icon_y = text_block_center_y - (ec_rep_icon_size / 2)
+        icon_y = text_block_center_y - (ec_rep_icon_size / 2) + (2 / 72 * inch)  # Move 2pt up
         
         if ec_rep_symbol:
             c.drawImage(ec_rep_symbol, left_margin, icon_y,
@@ -253,24 +253,31 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Position SN value after icon
         c.drawString(identifier_x + icon_size_small + 0.05 * inch, right_y, f"(21){serial}")
         
-        # QR CODE
-        qr_size = 0.72 * inch
+        # QR CODE - 10% larger while maintaining bottom and right margins
+        qr_size_original = 0.72 * inch
+        qr_size = qr_size_original * 1.10  # 10% larger
         qr_size_px = int(qr_size * 2.8)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
-        qr_x = LABEL_WIDTH - right_margin - qr_size + 0.08 * inch
+        # Calculate position: keep right and bottom margins fixed
+        # Original position had the QR at a certain distance from right edge
+        # As QR grows, we need to move it left by the increase amount to keep right edge at same position
+        qr_size_increase = qr_size - qr_size_original
+        qr_x = LABEL_WIDTH - right_margin - qr_size + 0.08 * inch - qr_size_increase
         qr_y = bottom_margin
         
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size, height=qr_size)
         
         # FIX 1: UDI - use image14.png icon next to QR code (no text)
+        # Maintain the same distance from QR code, so move left as QR grows
         udi_icon_y = qr_y + (qr_size / 2)
         udi_icon_size = 0.22 * inch * 0.90  # 10% smaller
+        udi_qr_gap = 0.08 * inch  # Fixed gap between UDI and QR
         
         if udi_symbol:
-            # Position UDI icon to the left of QR code, vertically centered
-            udi_icon_x = qr_x - udi_icon_size - 0.08 * inch
+            # Position UDI icon to the left of QR code, vertically centered, maintaining gap
+            udi_icon_x = qr_x - udi_icon_size - udi_qr_gap
             c.drawImage(udi_symbol, udi_icon_x, udi_icon_y - (udi_icon_size / 2),
                        width=udi_icon_size, height=udi_icon_size,
                        preserveAspectRatio=True, mask="auto")
