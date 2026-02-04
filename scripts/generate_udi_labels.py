@@ -134,9 +134,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         left_y -= 6
         c.drawString(text_x, left_y, product["manufacturer"]["address_line2"])
         
-        # Draw manufacturer icon vertically centered with text block
+        # Draw manufacturer icon vertically centered with the entire text block
+        # Center of text block is at start minus half the total height
+        text_block_center_y = manufacturer_start_y - (manufacturer_text_height / 72 * inch / 2)
+        icon_y = text_block_center_y - (manufacturer_icon_size / 2)
+        
         if manufacturer_symbol:
-            icon_y = manufacturer_start_y - (manufacturer_text_height / 72 * inch / 2) - (manufacturer_icon_size / 2)
             c.drawImage(manufacturer_symbol, left_margin, icon_y,
                        width=manufacturer_icon_size, height=manufacturer_icon_size,
                        preserveAspectRatio=True, mask="auto")
@@ -146,7 +149,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block
         # Calculate text block height (3 lines: 6.5 + 6 spacing = 12.5pt)
         ec_rep_text_height = 12.5
-        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.05  # 5% larger
+        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.10  # 10% larger total (5% + 5%)
         
         text_x = left_margin + ec_rep_icon_size + icon_text_gap
         ec_rep_start_y = left_y
@@ -168,9 +171,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         c.drawString(text_x, left_y, address_line2)
         
-        # Draw EC REP icon vertically centered with text block
+        # Draw EC REP icon vertically centered with the entire text block
+        # Center of text block is at start minus half the total height
+        text_block_center_y = ec_rep_start_y - (ec_rep_text_height / 72 * inch / 2)
+        icon_y = text_block_center_y - (ec_rep_icon_size / 2)
+        
         if ec_rep_symbol:
-            icon_y = ec_rep_start_y - (ec_rep_text_height / 72 * inch / 2) - (ec_rep_icon_size / 2)
             c.drawImage(ec_rep_symbol, left_margin, icon_y,
                        width=ec_rep_icon_size, height=ec_rep_icon_size,
                        preserveAspectRatio=True, mask="auto")
@@ -214,8 +220,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         udi_icon_size = 0.22 * inch * 0.90  # UDI icon size - 10% smaller
         icon_size_small = udi_icon_size  # Make LOT and SN same size as UDI
         
-        # FIX 2: GTIN block - "GTIN" text LEFT of number (before it), 10% smaller
-        gtin_font_size = 6.5 * 0.90  # 10% smaller
+        # FIX 2: GTIN block - "GTIN" text LEFT of number (before it), 15% smaller total
+        gtin_font_size = 6.5 * 0.85  # 15% smaller (10% + 5%)
         c.setFont("Helvetica-Bold", gtin_font_size)
         gtin_label_width = c.stringWidth("GTIN", "Helvetica-Bold", gtin_font_size)
         c.drawString(identifier_x, right_y, "GTIN")
