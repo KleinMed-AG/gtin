@@ -134,10 +134,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         left_y -= 6
         c.drawString(text_x, left_y, product["manufacturer"]["address_line2"])
         
-        # Draw manufacturer icon vertically centered with the entire text block, then move 3pt up (was 10pt up, now -7pt = 3pt up)
+        # Draw manufacturer icon vertically centered with the entire text block, then move 5pt up
         # Center of text block is at start minus half the total height
         text_block_center_y = manufacturer_start_y - (manufacturer_text_height / 72 * inch / 2)
-        icon_y = text_block_center_y - (manufacturer_icon_size / 2) + (3 / 72 * inch)  # Move 3pt up
+        icon_y = text_block_center_y - (manufacturer_icon_size / 2) + (5 / 72 * inch)  # Move 5pt up
         
         if manufacturer_symbol:
             c.drawImage(manufacturer_symbol, left_margin, icon_y,
@@ -149,7 +149,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block
         # Calculate text block height (3 lines: 6.5 + 6 spacing = 12.5pt)
         ec_rep_text_height = 12.5
-        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.20  # 20% larger total (5% + 5% + 10%)
+        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.25  # 25% larger total (5% + 5% + 10% + 5%)
         
         text_x = left_margin + ec_rep_icon_size + icon_text_gap
         ec_rep_start_y = left_y
@@ -171,10 +171,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         c.drawString(text_x, left_y, address_line2)
         
-        # Draw EC REP icon vertically centered with the entire text block, then move 2pt up
+        # Draw EC REP icon vertically centered with the entire text block, then move 1pt down
         # Center of text block is at start minus half the total height
         text_block_center_y = ec_rep_start_y - (ec_rep_text_height / 72 * inch / 2)
-        icon_y = text_block_center_y - (ec_rep_icon_size / 2) + (2 / 72 * inch)  # Move 2pt up
+        icon_y = text_block_center_y - (ec_rep_icon_size / 2) - (1 / 72 * inch)  # Move 1pt down
         
         if ec_rep_symbol:
             c.drawImage(ec_rep_symbol, left_margin, icon_y,
@@ -253,9 +253,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Position SN value after icon
         c.drawString(identifier_x + icon_size_small + 0.05 * inch, right_y, f"(21){serial}")
         
-        # QR CODE - 10% larger while maintaining bottom and right margins
+        # QR CODE - 20% larger while maintaining bottom and right margins
         qr_size_original = 0.72 * inch
-        qr_size = qr_size_original * 1.10  # 10% larger
+        qr_size = qr_size_original * 1.20  # 20% larger
         qr_size_px = int(qr_size * 2.8)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
