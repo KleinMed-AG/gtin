@@ -219,6 +219,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         identifier_x = right_column_left
         udi_icon_size = 0.22 * inch * 0.90  # UDI icon size - 10% smaller
         icon_size_small = udi_icon_size  # Make LOT and SN same size as UDI
+        icon_number_gap = 0.05 * inch + (1 / 72 * inch)  # Add 1pt more spacing
         
         # FIX 2: GTIN block - "GTIN" text LEFT of number (before it), 15% smaller total
         gtin_font_size = 6.5 * 0.85  # 15% smaller (10% + 5%)
@@ -228,8 +229,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         number_font_size = 5 * 0.95  # Numbers 5% smaller
         c.setFont("Helvetica", number_font_size)
-        # Position GTIN number after the label with small gap
-        c.drawString(identifier_x + gtin_label_width + 0.05 * inch, right_y, f"(01){product['gtin']}")
+        # Position GTIN number after the label with increased gap
+        c.drawString(identifier_x + gtin_label_width + icon_number_gap, right_y, f"(01){product['gtin']}")
         right_y -= block_spacing
         
         # FIX 3 & 4: LOT block - NO "LOT" text, just icon (image8) and value
@@ -239,8 +240,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", number_font_size)
-        # Position LOT value after icon
-        c.drawString(identifier_x + icon_size_small + 0.05 * inch, right_y, f"(11){mfg_date}")
+        # Position LOT value after icon with increased gap
+        c.drawString(identifier_x + icon_size_small + icon_number_gap, right_y, f"(11){mfg_date}")
         right_y -= block_spacing
         
         # FIX 5: SN block - NO "SN" text, just icon and value
@@ -250,13 +251,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", number_font_size)
-        # Position SN value after icon
-        c.drawString(identifier_x + icon_size_small + 0.05 * inch, right_y, f"(21){serial}")
+        # Position SN value after icon with increased gap
+        c.drawString(identifier_x + icon_size_small + icon_number_gap, right_y, f"(21){serial}")
         
         # QR CODE - 20% larger while maintaining bottom and right margins
         qr_size_original = 0.72 * inch
         qr_size = qr_size_original * 1.20  # 20% larger
-        qr_size_px = int(qr_size * 2.8)
+        qr_size_px = int(qr_size * 4.0)  # Increased resolution for sharper QR code (was 2.8)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
         # Calculate position: keep right and bottom margins fixed
