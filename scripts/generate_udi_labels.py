@@ -134,10 +134,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         left_y -= 6
         c.drawString(text_x, left_y, product["manufacturer"]["address_line2"])
         
-        # Draw manufacturer icon vertically centered with the entire text block
+        # Draw manufacturer icon vertically centered with the entire text block, then move 10pt up
         # Center of text block is at start minus half the total height
         text_block_center_y = manufacturer_start_y - (manufacturer_text_height / 72 * inch / 2)
-        icon_y = text_block_center_y - (manufacturer_icon_size / 2)
+        icon_y = text_block_center_y - (manufacturer_icon_size / 2) + (10 / 72 * inch)  # Move 10pt up
         
         if manufacturer_symbol:
             c.drawImage(manufacturer_symbol, left_margin, icon_y,
@@ -149,7 +149,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block
         # Calculate text block height (3 lines: 6.5 + 6 spacing = 12.5pt)
         ec_rep_text_height = 12.5
-        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.10  # 10% larger total (5% + 5%)
+        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.20  # 20% larger total (5% + 5% + 10%)
         
         text_x = left_margin + ec_rep_icon_size + icon_text_gap
         ec_rep_start_y = left_y
