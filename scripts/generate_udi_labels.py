@@ -171,10 +171,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         c.drawString(text_x, left_y, address_line2)
         
-        # Draw EC REP icon vertically centered with the entire text block, then move 1pt down
+        # Draw EC REP icon vertically centered with the entire text block (centered now)
         # Center of text block is at start minus half the total height
         text_block_center_y = ec_rep_start_y - (ec_rep_text_height / 72 * inch / 2)
-        icon_y = text_block_center_y - (ec_rep_icon_size / 2) - (1 / 72 * inch)  # Move 1pt down
+        icon_y = text_block_center_y - (ec_rep_icon_size / 2)  # Centered (was 1pt down, now +1pt = centered)
         
         if ec_rep_symbol:
             c.drawImage(ec_rep_symbol, left_margin, icon_y,
@@ -214,6 +214,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_y -= 0.28 * inch
         
+        # Move entire GTIN/LOT/SN block 3pt down
+        right_y -= (3 / 72 * inch)
+        
         # GTIN/LOT/SN blocks
         block_spacing = 10
         identifier_x = right_column_left
@@ -235,7 +238,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # FIX 3 & 4: LOT block - NO "LOT" text, just icon (image8) and value
         if manufacturer_symbol_empty:
-            c.drawImage(manufacturer_symbol_empty, identifier_x, right_y - (icon_size_small * 0.55),
+            # Move LOT icon 2pt up
+            c.drawImage(manufacturer_symbol_empty, identifier_x, right_y - (icon_size_small * 0.55) + (2 / 72 * inch),
                        width=icon_size_small, height=icon_size_small,
                        preserveAspectRatio=True, mask="auto")
         
@@ -257,7 +261,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # QR CODE - 20% larger while maintaining bottom and right margins
         qr_size_original = 0.72 * inch
         qr_size = qr_size_original * 1.20  # 20% larger
-        qr_size_px = int(qr_size * 4.0)  # Increased resolution for sharper QR code (was 2.8)
+        qr_size_px = int(qr_size * 6.0)  # Further increased resolution for maximum sharpness (was 4.0)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
         # Calculate position: keep right and bottom margins fixed
