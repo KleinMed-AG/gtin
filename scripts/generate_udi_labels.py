@@ -181,6 +181,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=ec_rep_icon_size, height=ec_rep_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
+        # Store EC REP text end position for QR alignment
+        ec_rep_text_end_y = left_y
+        
         # === RIGHT COLUMN ===
         right_y = LABEL_HEIGHT - top_margin
         
@@ -190,6 +193,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         symbol_spacing = 0.04 * inch
         
         current_x = LABEL_WIDTH - right_margin - symbol_size
+        ce_mark_right_edge = current_x + symbol_size  # Store CE mark right edge for QR alignment
         
         if ce_mark:
             c.drawImage(ce_mark, current_x, symbol_row_y - symbol_size,
@@ -258,18 +262,17 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Position SN value after icon with increased gap
         c.drawString(identifier_x + icon_size_small + icon_number_gap, right_y, f"(21){serial}")
         
-        # QR CODE - 35% larger while maintaining bottom and right margins
+        # QR CODE - 35% larger, positioned to align with CE logo right edge and EC REP text bottom
         qr_size_original = 0.72 * inch
-        qr_size = qr_size_original * 1.35  # 35% larger (was 20%, increased by 15%)
+        qr_size = qr_size_original * 1.35  # 35% larger
         qr_size_px = int(qr_size * 6.0)  # High resolution for maximum sharpness
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
-        # Calculate position: keep right and bottom margins fixed
-        # Original position had the QR at a certain distance from right edge
-        # As QR grows, we need to move it left by the increase amount to keep right edge at same position
-        qr_size_increase = qr_size - qr_size_original
-        qr_x = LABEL_WIDTH - right_margin - qr_size + 0.08 * inch - qr_size_increase
-        qr_y = bottom_margin
+        # Position QR code:
+        # - Right edge aligned with CE mark right edge
+        # - Bottom edge aligned with EC REP text end
+        qr_x = ce_mark_right_edge - qr_size
+        qr_y = ec_rep_text_end_y
         
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size, height=qr_size)
