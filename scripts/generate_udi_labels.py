@@ -135,14 +135,15 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, left_y, product["description_it"][:80])
         left_y -= 14
         
-        # Manufacturer block
+        # Manufacturer block - moved 5pt to the left
         icon_text_gap = 0.04 * inch
+        left_margin_adjusted = left_margin - (5 / 72 * inch)  # Move 5pt to the left
         
         # Calculate text block height (3 lines: 6.5 + 6 + 6 = 18.5pt spacing)
         manufacturer_text_height = 18.5
         manufacturer_icon_size = (manufacturer_text_height / 72 * inch) * 0.85  # 15% smaller
         
-        text_x = left_margin + manufacturer_icon_size + icon_text_gap
+        text_x = left_margin_adjusted + manufacturer_icon_size + icon_text_gap
         manufacturer_start_y = left_y
         
         # All text same size: 4pt
@@ -161,18 +162,18 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         icon_y = text_block_center_y - (manufacturer_icon_size / 2) + (5 / 72 * inch)  # Move 5pt up
         
         if manufacturer_symbol:
-            c.drawImage(manufacturer_symbol, left_margin, icon_y,
+            c.drawImage(manufacturer_symbol, left_margin_adjusted, icon_y,
                        width=manufacturer_icon_size, height=manufacturer_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
         left_y -= 8
         
-        # EC REP block
+        # EC REP block - moved 5pt to the left, symbol 50% larger
         # Calculate text block height (3 lines: 6.5 + 6 spacing = 12.5pt)
         ec_rep_text_height = 12.5
-        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.25  # 25% larger total (5% + 5% + 10% + 5%)
+        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.75  # 75% larger total (25% + 50%)
         
-        text_x = left_margin + ec_rep_icon_size + icon_text_gap
+        text_x = left_margin_adjusted + ec_rep_icon_size + icon_text_gap
         ec_rep_start_y = left_y
         
         # All text same size: 4pt
@@ -199,7 +200,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         icon_y = text_block_center_y - (ec_rep_icon_size / 2) + (1 / 72 * inch)  # Move 1pt up
         
         if ec_rep_symbol:
-            c.drawImage(ec_rep_symbol, left_margin, icon_y,
+            c.drawImage(ec_rep_symbol, left_margin_adjusted, icon_y,
                        width=ec_rep_icon_size, height=ec_rep_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
@@ -209,9 +210,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === RIGHT COLUMN ===
         right_y = LABEL_HEIGHT - top_margin
         
-        # Regulatory symbols - MD and CE are 15% larger (was 5%, now 15% more = 20% total)
+        # Regulatory symbols - MD and CE are 25% larger (was 20%, now 5% more)
         symbol_row_y = right_y - 0.02 * inch
-        symbol_size = 0.13 * inch * 1.20  # 20% larger for CE and MD (was 1.05)
+        symbol_size = 0.13 * inch * 1.25  # 25% larger for CE and MD
         symbol_spacing = 0.04 * inch
         
         current_x = LABEL_WIDTH - right_margin - symbol_size
@@ -229,12 +230,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
             current_x -= (symbol_size + symbol_spacing)
         
-        # Spec symbols - 15% larger
+        # Spec symbols - 20% larger (was 15%, now 5% more)
         if spec_symbols:
-            spec_w = 1.12 * inch * 1.15  # 15% larger
-            spec_h = 0.16 * inch * 1.15  # 15% larger
+            spec_w = 1.12 * inch * 1.20  # 20% larger
+            spec_h = 0.16 * inch * 1.20  # 20% larger
             spec_x = current_x - spec_w
-            c.drawImage(spec_symbols, spec_x, symbol_row_y - 0.13 * inch * 1.20,  # Adjust for larger symbol size
+            c.drawImage(spec_symbols, spec_x, symbol_row_y - 0.13 * inch * 1.25,  # Adjust for larger symbol size
                        width=spec_w, height=spec_h,
                        preserveAspectRatio=True, mask="auto")
         
@@ -244,7 +245,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         right_y -= (10 / 72 * inch)
         
         # GTIN/LOT/SN blocks - moved 2pt to the right
-        block_spacing = 10
+        block_spacing = 11  # Increased from 10 to 11 (1pt more spacing)
         identifier_x = right_column_left + (2 / 72 * inch)  # Move 2pt to the right
         udi_icon_size = 0.22 * inch * 0.90  # UDI icon size - 10% smaller
         icon_size_small = udi_icon_size  # Make LOT and SN same size as UDI
