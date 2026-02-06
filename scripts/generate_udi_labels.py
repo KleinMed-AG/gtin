@@ -135,15 +135,15 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(left_margin, left_y, product["description_it"][:80])
         left_y -= 14
         
-        # Manufacturer block - moved 5pt to the left
+        # Manufacturer block - moved 15pt to the right
         icon_text_gap = 0.04 * inch
-        left_margin_adjusted = left_margin - (5 / 72 * inch)  # Move 5pt to the left
+        left_margin_adjusted_mfr = left_margin + (15 / 72 * inch)  # Move 15pt to the right
         
         # Calculate text block height (3 lines: 6.5 + 6 + 6 = 18.5pt spacing)
         manufacturer_text_height = 18.5
         manufacturer_icon_size = (manufacturer_text_height / 72 * inch) * 0.85  # 15% smaller
         
-        text_x = left_margin_adjusted + manufacturer_icon_size + icon_text_gap
+        text_x = left_margin_adjusted_mfr + manufacturer_icon_size + icon_text_gap
         manufacturer_start_y = left_y
         
         # All text same size: 4pt
@@ -162,18 +162,19 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         icon_y = text_block_center_y - (manufacturer_icon_size / 2) + (5 / 72 * inch)  # Move 5pt up
         
         if manufacturer_symbol:
-            c.drawImage(manufacturer_symbol, left_margin_adjusted, icon_y,
+            c.drawImage(manufacturer_symbol, left_margin_adjusted_mfr, icon_y,
                        width=manufacturer_icon_size, height=manufacturer_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
         left_y -= 8
         
-        # EC REP block - moved 5pt to the left, symbol 50% larger
+        # EC REP block - moved 10pt to the right, symbol 50% larger
         # Calculate text block height (3 lines: 6.5 + 6 spacing = 12.5pt)
+        left_margin_adjusted_ec = left_margin + (10 / 72 * inch)  # Move 10pt to the right
         ec_rep_text_height = 12.5
         ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.75  # 75% larger total (25% + 50%)
         
-        text_x = left_margin_adjusted + ec_rep_icon_size + icon_text_gap
+        text_x = left_margin_adjusted_ec + ec_rep_icon_size + icon_text_gap
         ec_rep_start_y = left_y
         
         # All text same size: 4pt
@@ -200,7 +201,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         icon_y = text_block_center_y - (ec_rep_icon_size / 2) + (1 / 72 * inch)  # Move 1pt up
         
         if ec_rep_symbol:
-            c.drawImage(ec_rep_symbol, left_margin_adjusted, icon_y,
+            c.drawImage(ec_rep_symbol, left_margin_adjusted_ec, icon_y,
                        width=ec_rep_icon_size, height=ec_rep_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
