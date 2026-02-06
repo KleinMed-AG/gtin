@@ -15,6 +15,26 @@ import json
 LABEL_WIDTH = 3 * inch
 LABEL_HEIGHT = 2 * inch
 
+def validate_manufacturing_date(mfg_date):
+    """Validate manufacturing date in YYMMDD format"""
+    if len(mfg_date) != 6:
+        raise ValueError(f"Manufacturing date must be 6 digits (YYMMDD), got: {mfg_date}")
+    
+    try:
+        year = int(mfg_date[0:2])
+        month = int(mfg_date[2:4])
+        day = int(mfg_date[4:6])
+    except ValueError:
+        raise ValueError(f"Manufacturing date must contain only digits, got: {mfg_date}")
+    
+    if month < 1 or month > 12:
+        raise ValueError(f"Month (MM) must be between 01 and 12, got: {month:02d}")
+    
+    if day < 1 or day > 31:
+        raise ValueError(f"Day (TT) must be between 01 and 31, got: {day:02d}")
+    
+    return mfg_date
+
 def generate_udi_string(gtin, mfg_date, serial):
     """Generate UDI string in GS1 format"""
     return f"(01){gtin}(11){mfg_date}(21){serial}"
@@ -125,11 +145,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         text_x = left_margin + manufacturer_icon_size + icon_text_gap
         manufacturer_start_y = left_y
         
+        # All text same size: 4pt
         c.setFont("Helvetica", 4)
         c.drawString(text_x, left_y, product["manufacturer"]["name"])
         left_y -= 6.5
         
-        c.setFont("Helvetica", 3.5)
+        c.setFont("Helvetica", 4)
         c.drawString(text_x, left_y, product["manufacturer"]["address_line1"])
         left_y -= 6
         c.drawString(text_x, left_y, product["manufacturer"]["address_line2"])
@@ -154,11 +175,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         text_x = left_margin + ec_rep_icon_size + icon_text_gap
         ec_rep_start_y = left_y
         
+        # All text same size: 4pt
         c.setFont("Helvetica", 4)
         c.drawString(text_x, left_y, product["distributor"]["name"])
         left_y -= 6.5
         
-        c.setFont("Helvetica", 3.5)
+        c.setFont("Helvetica", 4)
         c.drawString(text_x, left_y, product["distributor"]["address_line1"])
         left_y -= 6
         
@@ -187,9 +209,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === RIGHT COLUMN ===
         right_y = LABEL_HEIGHT - top_margin
         
-        # Regulatory symbols - MD and CE are 5% larger
+        # Regulatory symbols - MD and CE are 15% larger (was 5%, now 15% more = 20% total)
         symbol_row_y = right_y - 0.02 * inch
-        symbol_size = 0.13 * inch * 1.05  # 5% larger for CE and MD
+        symbol_size = 0.13 * inch * 1.20  # 20% larger for CE and MD (was 1.05)
         symbol_spacing = 0.04 * inch
         
         current_x = LABEL_WIDTH - right_margin - symbol_size
@@ -207,12 +229,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
             current_x -= (symbol_size + symbol_spacing)
         
-        # Spec symbols (unchanged size)
+        # Spec symbols - 15% larger
         if spec_symbols:
-            spec_w = 1.12 * inch
-            spec_h = 0.16 * inch
+            spec_w = 1.12 * inch * 1.15  # 15% larger
+            spec_h = 0.16 * inch * 1.15  # 15% larger
             spec_x = current_x - spec_w
-            c.drawImage(spec_symbols, spec_x, symbol_row_y - 0.13 * inch,  # Use original symbol size for positioning
+            c.drawImage(spec_symbols, spec_x, symbol_row_y - 0.13 * inch * 1.20,  # Adjust for larger symbol size
                        width=spec_w, height=spec_h,
                        preserveAspectRatio=True, mask="auto")
         
@@ -221,23 +243,30 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Move entire GTIN/LOT/SN block 10pt down (was 3pt, now 7pt more)
         right_y -= (10 / 72 * inch)
         
-        # GTIN/LOT/SN blocks
+        # GTIN/LOT/SN blocks - moved 2pt to the right
         block_spacing = 10
-        identifier_x = right_column_left
+        identifier_x = right_column_left + (2 / 72 * inch)  # Move 2pt to the right
         udi_icon_size = 0.22 * inch * 0.90  # UDI icon size - 10% smaller
         icon_size_small = udi_icon_size  # Make LOT and SN same size as UDI
         icon_number_gap = 0.05 * inch + (1 / 72 * inch)  # Add 1pt more spacing
         
-        # FIX 2: GTIN block - "GTIN" text LEFT of number (before it), 15% smaller total
+        # Calculate the maximum width needed for labels/icons to align numbers
         gtin_font_size = 6.5 * 0.85  # 15% smaller (10% + 5%)
         c.setFont("Helvetica-Bold", gtin_font_size)
         gtin_label_width = c.stringWidth("GTIN", "Helvetica-Bold", gtin_font_size)
+        
+        # The maximum width is either the GTIN label or the icon size
+        max_label_width = max(gtin_label_width, icon_size_small)
+        number_start_x = identifier_x + max_label_width + icon_number_gap
+        
+        # FIX 2: GTIN block - "GTIN" text LEFT of number (before it), 15% smaller total
+        c.setFont("Helvetica-Bold", gtin_font_size)
         c.drawString(identifier_x, right_y, "GTIN")
         
         number_font_size = 5 * 0.95  # Numbers 5% smaller
         c.setFont("Helvetica", number_font_size)
-        # Position GTIN number after the label with increased gap
-        c.drawString(identifier_x + gtin_label_width + icon_number_gap, right_y, f"(01){product['gtin']}")
+        # Position GTIN number at aligned position
+        c.drawString(number_start_x, right_y, f"(01){product['gtin']}")
         right_y -= block_spacing
         
         # FIX 3 & 4: LOT block - NO "LOT" text, just icon (image8) and value
@@ -248,8 +277,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", number_font_size)
-        # Position LOT value after icon with increased gap
-        c.drawString(identifier_x + icon_size_small + icon_number_gap, right_y, f"(11){mfg_date}")
+        # Position LOT value at aligned position
+        c.drawString(number_start_x, right_y, f"(11){mfg_date}")
         right_y -= block_spacing
         
         # FIX 5: SN block - NO "SN" text, just icon and value
@@ -259,8 +288,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", number_font_size)
-        # Position SN value after icon with increased gap
-        c.drawString(identifier_x + icon_size_small + icon_number_gap, right_y, f"(21){serial}")
+        # Position SN value at aligned position
+        c.drawString(number_start_x, right_y, f"(21){serial}")
         
         # QR CODE - 35% larger, positioned to align with CE logo right edge and EC REP text bottom, moved down 10pt
         qr_size_original = 0.72 * inch
@@ -329,6 +358,13 @@ def main():
     parser.add_argument("--count", type=int, required=True, help="Number of labels")
     
     args = parser.parse_args()
+    
+    # Validate manufacturing date
+    try:
+        validate_manufacturing_date(args.mfg_date)
+    except ValueError as e:
+        print(f"Error: {e}")
+        return 1
     
     product = json.loads(args.product_json)
     
