@@ -70,7 +70,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     c = canvas.Canvas(output_file, pagesize=(LABEL_WIDTH, LABEL_HEIGHT))
 
     # Load assets
-    logo = load_image_safe("assets/image1.png")
+    logo = load_image_safe("assets/2a82bf22-0bef-4cfb-830f-349f1fc793ef-1.png")
     ce_mark = load_image_safe("assets/image2.png")
     md_symbol = load_image_safe("assets/image3.png")
     manufacturer_symbol = load_image_safe("assets/image6.png")
@@ -168,9 +168,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         left_y -= 8
         
-        # EC REP block - moved 10pt to the right, symbol 50% larger
+        # EC REP block - moved 7pt to the right (was 10pt, now 3pt left = 7pt), symbol 50% larger
         # Calculate text block height (3 lines: 6.5 + 6 spacing = 12.5pt)
-        left_margin_adjusted_ec = left_margin + (10 / 72 * inch)  # Move 10pt to the right
+        left_margin_adjusted_ec = left_margin + (7 / 72 * inch)  # Move 7pt to the right (3pt left from 10pt)
         ec_rep_text_height = 12.5
         ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.75  # 75% larger total (25% + 50%)
         
@@ -231,11 +231,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
             current_x -= (symbol_size + symbol_spacing)
         
-        # Spec symbols - 20% larger (was 15%, now 5% more)
+        # Spec symbols - 45% larger (was 20%, now 25% more) and moved 10pt to the right
         if spec_symbols:
-            spec_w = 1.12 * inch * 1.20  # 20% larger
-            spec_h = 0.16 * inch * 1.20  # 20% larger
-            spec_x = current_x - spec_w
+            spec_w = 1.12 * inch * 1.45  # 45% larger
+            spec_h = 0.16 * inch * 1.45  # 45% larger
+            spec_x = current_x - spec_w + (10 / 72 * inch)  # Move 10pt to the right
             c.drawImage(spec_symbols, spec_x, symbol_row_y - 0.13 * inch * 1.25,  # Adjust for larger symbol size
                        width=spec_w, height=spec_h,
                        preserveAspectRatio=True, mask="auto")
@@ -283,15 +283,16 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(number_start_x, right_y, f"(11){mfg_date}")
         right_y -= block_spacing
         
-        # FIX 5: SN block - NO "SN" text, just icon and value
+        # FIX 5: SN block - NO "SN" text, just icon and value, moved 5pt down
         if sn_symbol:
             c.drawImage(sn_symbol, identifier_x, right_y - (icon_size_small * 0.55),
                        width=icon_size_small, height=icon_size_small,
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", number_font_size)
-        # Position SN value at aligned position
-        c.drawString(number_start_x, right_y, f"(21){serial}")
+        # Position SN value at aligned position, 5pt down
+        sn_y = right_y - (5 / 72 * inch)  # Move 5pt down
+        c.drawString(number_start_x, sn_y, f"(21){serial}")
         
         # QR CODE - 35% larger, positioned to align with CE logo right edge and EC REP text bottom, moved down 10pt
         qr_size_original = 0.72 * inch
