@@ -2,8 +2,8 @@ export default function handler(req, res) {
   const basicAuth = req.headers.authorization;
 
   // Define your credentials
-  const validUsername = 'admin';
-  const validPassword = 'SecurePass123!'; // Change this!
+  const validUsername = os.getenv("USERNAME");
+  const validPassword = os.getenv("PASSWORD")
 
   if (basicAuth) {
     const authValue = basicAuth.split(' ')[1];
