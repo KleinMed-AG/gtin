@@ -84,16 +84,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     udi_symbol = load_image_safe("assets/image14.png")
     spec_symbols = load_image_safe("assets/Screenshot 2026-01-28 100951.png")
 
-    # Layout parameters (in mm for clarity)
-    margin = 10 * mm  # 10mm margins
+    # Layout parameters matching the original PNG
+    left_margin = 15 * mm
+    top_margin = 15 * mm
     
-    # Content area dimensions
-    content_width = PAGE_WIDTH - (2 * margin)
-    content_height = PAGE_HEIGHT - (2 * margin)
-    
-    # Define two-column layout
-    col1_width = content_width * 0.55  # Left column 55%
-    col2_start = margin + col1_width + (10 * mm)  # Right column with 10mm gap
+    # Right column starts much earlier (around 60% across page)
+    right_col_x = 165 * mm
 
     for i in range(count):
         serial = serial_start + i
@@ -103,73 +99,75 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.showPage()
 
         # Current Y position (starting from top)
-        y_pos = PAGE_HEIGHT - margin
+        y_pos = PAGE_HEIGHT - top_margin
 
         # === LEFT COLUMN ===
         
-        # Logo (top-left)
+        # Logo (larger, more prominent)
         if logo:
-            logo_w = 40 * mm
-            logo_h = 12 * mm
-            c.drawImage(logo, margin, y_pos - logo_h,
+            logo_w = 140 * mm
+            logo_h = 40 * mm
+            c.drawImage(logo, left_margin, y_pos - logo_h,
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
             y_pos -= (logo_h + 8 * mm)
 
-        # Product titles (4 languages)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(margin, y_pos, product["name_de"])
-        y_pos -= 4.5 * mm
-        c.drawString(margin, y_pos, product["name_en"])
-        y_pos -= 4.5 * mm
-        c.drawString(margin, y_pos, product["name_fr"])
-        y_pos -= 4.5 * mm
-        c.drawString(margin, y_pos, product["name_it"])
-        y_pos -= 8 * mm
-
-        # Description (pain relief text)
-        c.setFont("Helvetica", 9)
-        c.drawString(margin, y_pos, product["description_de"][:100])
-        y_pos -= 3.5 * mm
-        c.drawString(margin, y_pos, product["description_en"][:100])
-        y_pos -= 3.5 * mm
-        c.drawString(margin, y_pos, product["description_fr"][:100])
-        y_pos -= 3.5 * mm
-        c.drawString(margin, y_pos, product["description_it"][:100])
+        # Product titles (4 languages) - BOLD and larger
+        c.setFont("Helvetica-Bold", 18)
+        line_height = 6.5 * mm
+        c.drawString(left_margin, y_pos, product["name_de"])
+        y_pos -= line_height
+        c.drawString(left_margin, y_pos, product["name_en"])
+        y_pos -= line_height
+        c.drawString(left_margin, y_pos, product["name_fr"])
+        y_pos -= line_height
+        c.drawString(left_margin, y_pos, product["name_it"])
         y_pos -= 10 * mm
 
-        # Manufacturer block
+        # Description (pain relief text) - Regular weight, good size
+        c.setFont("Helvetica", 13)
+        desc_line_height = 5 * mm
+        c.drawString(left_margin, y_pos, product["description_de"][:100])
+        y_pos -= desc_line_height
+        c.drawString(left_margin, y_pos, product["description_en"][:100])
+        y_pos -= desc_line_height
+        c.drawString(left_margin, y_pos, product["description_fr"][:100])
+        y_pos -= desc_line_height
+        c.drawString(left_margin, y_pos, product["description_it"][:100])
+        y_pos -= 15 * mm
+
+        # Manufacturer block with factory icon
         mfr_y = y_pos
         if manufacturer_symbol:
-            icon_size = 5 * mm
-            c.drawImage(manufacturer_symbol, margin, mfr_y - icon_size,
+            icon_size = 12 * mm
+            c.drawImage(manufacturer_symbol, left_margin, mfr_y - icon_size,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 9)
-        text_x = margin + 7 * mm
+        c.setFont("Helvetica", 13)
+        text_x = left_margin + 15 * mm
         c.drawString(text_x, mfr_y, product["manufacturer"]["name"])
-        mfr_y -= 3.5 * mm
-        c.setFont("Helvetica", 8)
+        mfr_y -= 5 * mm
+        c.setFont("Helvetica", 13)
         c.drawString(text_x, mfr_y, product["manufacturer"]["address_line1"])
-        mfr_y -= 3 * mm
+        mfr_y -= 5 * mm
         c.drawString(text_x, mfr_y, product["manufacturer"]["address_line2"])
-        y_pos = mfr_y - 8 * mm
+        y_pos = mfr_y - 10 * mm
 
-        # EC REP block
+        # EC REP block with box icon
         ec_y = y_pos
         if ec_rep_symbol:
-            icon_size = 5 * mm
-            c.drawImage(ec_rep_symbol, margin, ec_y - icon_size,
+            icon_size = 12 * mm
+            c.drawImage(ec_rep_symbol, left_margin, ec_y - icon_size,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", 9)
+        c.setFont("Helvetica", 13)
         c.drawString(text_x, ec_y, product["distributor"]["name"])
-        ec_y -= 3.5 * mm
-        c.setFont("Helvetica", 8)
+        ec_y -= 5 * mm
+        c.setFont("Helvetica", 13)
         c.drawString(text_x, ec_y, product["distributor"]["address_line1"])
-        ec_y -= 3 * mm
+        ec_y -= 5 * mm
         
         address_line2 = product["distributor"]["address_line2"]
         if "Lübeck" in address_line2 and "," not in address_line2:
@@ -180,81 +178,90 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # === RIGHT COLUMN ===
         
-        right_y = PAGE_HEIGHT - margin
+        right_y = PAGE_HEIGHT - top_margin
 
-        # Top symbols row (CE, MD, specs)
-        symbol_size = 6 * mm
-        current_x = PAGE_WIDTH - margin - symbol_size
+        # Top symbols row (specs, MD, CE) - all same size
+        symbol_y = right_y - 3 * mm
+        symbol_size = 14 * mm
         
+        # CE mark (rightmost)
+        ce_x = PAGE_WIDTH - left_margin - symbol_size
         if ce_mark:
-            c.drawImage(ce_mark, current_x, right_y - symbol_size,
+            c.drawImage(ce_mark, ce_x, symbol_y - symbol_size,
                        width=symbol_size, height=symbol_size,
                        preserveAspectRatio=True, mask="auto")
-            current_x -= (symbol_size + 3 * mm)
         
+        # MD symbol
+        md_x = ce_x - symbol_size - 5 * mm
         if md_symbol:
-            c.drawImage(md_symbol, current_x, right_y - symbol_size,
+            c.drawImage(md_symbol, md_x, symbol_y - symbol_size,
                        width=symbol_size, height=symbol_size,
                        preserveAspectRatio=True, mask="auto")
-            current_x -= (symbol_size + 3 * mm)
         
+        # Spec symbols (3-box strip) - wider
         if spec_symbols:
-            spec_w = 40 * mm
-            spec_h = 6 * mm
-            c.drawImage(spec_symbols, current_x - spec_w, right_y - spec_h,
+            spec_w = 55 * mm
+            spec_h = 14 * mm
+            spec_x = md_x - spec_w - 5 * mm
+            c.drawImage(spec_symbols, spec_x, symbol_y - spec_h,
                        width=spec_w, height=spec_h,
                        preserveAspectRatio=True, mask="auto")
         
-        right_y -= (symbol_size + 15 * mm)
+        right_y -= 30 * mm
 
-        # GTIN/LOT/SN blocks
-        label_x = col2_start
-        value_x = label_x + 18 * mm
+        # GTIN/LOT/SN blocks - aligned right
+        value_x = PAGE_WIDTH - left_margin - 1 * mm
         
-        # GTIN
-        c.setFont("Helvetica-Bold", 10)
-        c.drawString(label_x, right_y, "GTIN")
-        c.setFont("Helvetica", 9)
-        c.drawString(value_x, right_y, f"(01){product['gtin']}")
-        right_y -= 7 * mm
+        # GTIN - bold label
+        c.setFont("Helvetica-Bold", 16)
+        gtin_label = "GTIN"
+        gtin_label_width = c.stringWidth(gtin_label, "Helvetica-Bold", 16)
+        c.drawRightString(value_x - 50 * mm, right_y, gtin_label)
         
-        # LOT
+        c.setFont("Helvetica", 14)
+        c.drawRightString(value_x, right_y, f"(01){product['gtin']}")
+        right_y -= 12 * mm
+        
+        # LOT with factory icon
+        icon_x = value_x - 85 * mm
         if manufacturer_symbol_empty:
-            icon_size = 4 * mm
-            c.drawImage(manufacturer_symbol_empty, label_x, right_y - icon_size/2,
+            icon_size = 10 * mm
+            c.drawImage(manufacturer_symbol_empty, icon_x, right_y - icon_size/2,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
-        c.setFont("Helvetica", 9)
-        c.drawString(value_x, right_y, f"(11){mfg_date}")
-        right_y -= 7 * mm
+        c.setFont("Helvetica", 14)
+        c.drawRightString(value_x, right_y, f"(11){mfg_date}")
+        right_y -= 12 * mm
         
-        # SN
+        # SN with box icon
         if sn_symbol:
-            icon_size = 4 * mm
-            c.drawImage(sn_symbol, label_x, right_y - icon_size/2,
+            icon_size = 10 * mm
+            c.drawImage(sn_symbol, icon_x, right_y - icon_size/2,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
-        c.setFont("Helvetica", 9)
-        c.drawString(value_x, right_y, f"(21){serial}")
+        c.setFont("Helvetica", 14)
+        c.drawRightString(value_x, right_y, f"(21){serial}")
 
-        # QR Code (bottom-right)
-        qr_size = 60 * mm
+        # QR Code (bottom-right, large)
+        qr_size = 70 * mm
         qr_size_px = int(qr_size * 4)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
-        qr_x = PAGE_WIDTH - margin - qr_size
-        qr_y = margin
+        qr_x = PAGE_WIDTH - left_margin - qr_size
+        qr_y = 15 * mm
         c.drawImage(qr_img, qr_x, qr_y,
                    width=qr_size, height=qr_size)
         
-        # UDI icon next to QR
-        if udi_symbol:
-            udi_size = 10 * mm
-            udi_x = qr_x - udi_size - 5 * mm
-            udi_y = qr_y + (qr_size - udi_size) / 2
-            c.drawImage(udi_symbol, udi_x, udi_y,
-                       width=udi_size, height=udi_size,
-                       preserveAspectRatio=True, mask="auto")
+        # UDI label (box with text) next to QR - positioned to left
+        c.setFont("Helvetica-Bold", 12)
+        udi_box_w = 18 * mm
+        udi_box_h = 10 * mm
+        udi_box_x = qr_x - udi_box_w - 8 * mm
+        udi_box_y = qr_y + (qr_size - udi_box_h) / 2
+        
+        # Draw UDI box
+        c.rect(udi_box_x, udi_box_y, udi_box_w, udi_box_h, stroke=1, fill=0)
+        c.drawCentredString(udi_box_x + udi_box_w/2, udi_box_y + 2.5 * mm, "UDI")
 
     c.save()
     print(f"✓ PDF created: {output_file}")
