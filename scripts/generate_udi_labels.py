@@ -79,6 +79,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     udi_symbol = load_image_safe("assets/image14.png")  # FIX 1: Use next to QR
     spec_symbols = load_image_safe("assets/Screenshot 2026-01-28 100951.png")
 
+    # Global scale factor for A4 landscape
+    GLOBAL_SCALE = 1.08  # Apply to all elements for proper density
+
     # Layout parameters for A4 landscape
     left_margin = 0.5 * inch  # Increased for A4
     top_margin = 0.5 * inch   # Increased for A4
@@ -102,63 +105,67 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === LEFT COLUMN ===
         left_y = PAGE_HEIGHT - top_margin
         
-        # Logo - 58% larger (50% + 8%), shifted +6pt X, +4pt Y
+        # Logo - +42% scale (1.58 * 1.42 = 2.24), +16pt X, +7.1pt Y
         if logo:
-            logo_w = 0.86 * inch * 1.58  # 58% larger
-            logo_h = 0.25 * inch * 1.58  # 58% larger
-            logo_x = left_margin + (6 / 72 * inch)  # Shift +6pt X
-            logo_y_shift = 4 / 72 * inch  # Shift +4pt Y
+            logo_base_scale = 1.58 * 1.42 * GLOBAL_SCALE  # Previous adjustments * new scale * global
+            logo_w = 0.86 * inch * logo_base_scale
+            logo_h = 0.25 * inch * logo_base_scale
+            logo_x = left_margin + (6 / 72 * inch) + 16  # Previous +6pt + new +16pt
+            logo_y_shift = (4 / 72 * inch) + 7.1  # Previous +4pt + new +7.1pt
             c.drawImage(logo, logo_x, left_y - logo_h + logo_y_shift, 
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
             left_y -= (logo_h + 0.16 * inch - logo_y_shift)
         
-        # Product title block - Size +3%, Shift +8pt Y
-        product_name_font_size = 5 * 1.03  # +3% size
-        product_name_y_shift = 8 / 72 * inch  # Shift +8pt Y
+        # Product title block - +18% font scale, +18.5pt X, +12.5pt Y, +10% line spacing
+        product_name_font_size = 5 * 1.03 * 1.18 * GLOBAL_SCALE  # Previous * new +18% * global
+        product_name_y_shift = (8 / 72 * inch) + 12.5  # Previous +8pt + new +12.5pt
+        product_name_x_shift = 18.5  # +18.5pt X
         left_y += product_name_y_shift
         
         c.setFont("Helvetica-Bold", product_name_font_size)
-        c.drawString(left_margin, left_y, product["name_de"])
-        left_y -= 6
-        c.drawString(left_margin, left_y, product["name_en"])
-        left_y -= 6
-        c.drawString(left_margin, left_y, product["name_fr"])
-        left_y -= 6
-        c.drawString(left_margin, left_y, product["name_it"])
+        product_line_spacing = 6 * 1.10  # +10% line spacing
+        c.drawString(left_margin + product_name_x_shift, left_y, product["name_de"])
+        left_y -= product_line_spacing
+        c.drawString(left_margin + product_name_x_shift, left_y, product["name_en"])
+        left_y -= product_line_spacing
+        c.drawString(left_margin + product_name_x_shift, left_y, product["name_fr"])
+        left_y -= product_line_spacing
+        c.drawString(left_margin + product_name_x_shift, left_y, product["name_it"])
         left_y -= 8
         
-        # Indication paragraph - Size +2%, Shift +6pt Y
-        description_font_size = 4 * 1.02  # +2% size
-        description_y_shift = 6 / 72 * inch  # Shift +6pt Y
+        # Indication paragraph - +14% font scale, +19.4pt X, +16.7pt Y, +8% line spacing
+        description_font_size = 4 * 1.02 * 1.14 * GLOBAL_SCALE  # Previous * new +14% * global
+        description_y_shift = (6 / 72 * inch) + 16.7  # Previous +6pt + new +16.7pt
+        description_x_shift = 19.4  # +19.4pt X
         left_y += description_y_shift
         
         c.setFont("Helvetica", description_font_size)
-        line_spacing = 5.5
-        c.drawString(left_margin, left_y, product["description_de"][:80])
+        line_spacing = 5.5 * 1.08  # +8% line spacing
+        c.drawString(left_margin + description_x_shift, left_y, product["description_de"][:80])
         left_y -= line_spacing
-        c.drawString(left_margin, left_y, product["description_en"][:80])
+        c.drawString(left_margin + description_x_shift, left_y, product["description_en"][:80])
         left_y -= line_spacing
-        c.drawString(left_margin, left_y, product["description_fr"][:80])
+        c.drawString(left_margin + description_x_shift, left_y, product["description_fr"][:80])
         left_y -= line_spacing
-        c.drawString(left_margin, left_y, product["description_it"][:80])
+        c.drawString(left_margin + description_x_shift, left_y, product["description_it"][:80])
         left_y -= 14
         
-        # Manufacturer block - moved 15pt to the right, Size -2%, Shift -4pt X, +6pt Y
+        # Manufacturer block - +12% font scale, +13.5pt X, +19.6pt Y
         icon_text_gap = 0.04 * inch
-        left_margin_adjusted_mfr = left_margin + (15 / 72 * inch) - (4 / 72 * inch)  # Original +15pt, now -4pt more = +11pt
-        manufacturer_y_shift = 6 / 72 * inch  # Shift +6pt Y
+        left_margin_adjusted_mfr = left_margin + (15 / 72 * inch) - (4 / 72 * inch) + 13.5  # Previous adjustments + new +13.5pt X
+        manufacturer_y_shift = (6 / 72 * inch) + 19.6  # Previous +6pt + new +19.6pt Y
         
         # Calculate text block height (3 lines: 6.5 + 6 + 6 = 18.5pt spacing)
         manufacturer_text_height = 18.5
-        manufacturer_icon_size = (manufacturer_text_height / 72 * inch) * 0.85 * 0.98  # 15% smaller, then -2%
+        manufacturer_icon_size = (manufacturer_text_height / 72 * inch) * 0.85 * 0.98 * GLOBAL_SCALE  # Previous * global
         
         left_y += manufacturer_y_shift  # Apply Y shift
         text_x = left_margin_adjusted_mfr + manufacturer_icon_size + icon_text_gap
         manufacturer_start_y = left_y
         
-        # All text same size: 4pt * 0.98 = -2%
-        manufacturer_font_size = 4 * 0.98
+        # Font size: +12% scale
+        manufacturer_font_size = 4 * 0.98 * 1.12 * GLOBAL_SCALE  # Previous * new +12% * global
         c.setFont("Helvetica", manufacturer_font_size)
         c.drawString(text_x, left_y, product["manufacturer"]["name"])
         left_y -= 6.5
@@ -180,17 +187,18 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         left_y -= (8 - manufacturer_y_shift)  # Adjust spacing accounting for Y shift
         
-        # EC REP block - moved 9pt to the right, symbol 50% larger, Size -2% for text
-        # Calculate text block height (3 lines: 6.5 + 6 spacing = 12.5pt)
-        left_margin_adjusted_ec = left_margin + (9 / 72 * inch)  # Move 9pt to the right (2pt more from 7pt)
+        # EC REP block - +12% font scale, +15.2pt X, +21.4pt Y
+        left_margin_adjusted_ec = left_margin + (9 / 72 * inch) + 15.2  # Previous +9pt + new +15.2pt X
+        ec_rep_y_shift = 21.4  # +21.4pt Y
         ec_rep_text_height = 12.5
-        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.75  # 75% larger total (25% + 50%)
+        ec_rep_icon_size = (ec_rep_text_height / 72 * inch) * 1.75 * GLOBAL_SCALE  # Previous * global
         
+        left_y += ec_rep_y_shift  # Apply Y shift
         text_x = left_margin_adjusted_ec + ec_rep_icon_size + icon_text_gap
         ec_rep_start_y = left_y
         
-        # All text same size: 4pt * 0.98 = -2%
-        ec_rep_font_size = 4 * 0.98
+        # Font size: +12% scale
+        ec_rep_font_size = 4 * 0.98 * 1.12 * GLOBAL_SCALE  # Previous * new +12% * global
         c.setFont("Helvetica", ec_rep_font_size)
         c.drawString(text_x, left_y, product["distributor"]["name"])
         left_y -= 6.5
@@ -224,12 +232,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === RIGHT COLUMN ===
         right_y = PAGE_HEIGHT - top_margin
         
-        # Regulatory symbols - MD and CE: Size 0% (keep current 25%), Shift -6pt Y
-        symbol_row_y = right_y - 0.02 * inch - (6 / 72 * inch)  # Shift -6pt Y
-        symbol_size = 0.13 * inch * 1.25  # 25% larger for CE and MD (no additional change)
+        # Regulatory symbols - MD and CE: +22% scale, -14.3pt X, +3.6pt Y
+        symbol_row_y = right_y - 0.02 * inch - (6 / 72 * inch) + 3.6  # Previous -6pt + new +3.6pt Y
+        symbol_base_scale = 1.25 * 1.22 * GLOBAL_SCALE  # Previous 25% * new +22% * global
+        symbol_size = 0.13 * inch * symbol_base_scale
         symbol_spacing = 0.04 * inch
         
-        current_x = PAGE_WIDTH - right_margin - symbol_size
+        current_x = PAGE_WIDTH - right_margin - symbol_size - 14.3  # -14.3pt X
         ce_mark_right_edge = current_x + symbol_size  # Store CE mark right edge for QR alignment
         
         if ce_mark:
@@ -244,12 +253,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
             current_x -= (symbol_size + symbol_spacing)
         
-        # Spec symbols - 45% larger and moved 15pt to the right
+        # Spec symbols - +20% scale (1.45 * 1.20 = 1.74), -20.2pt X, +5.4pt Y
         if spec_symbols:
-            spec_w = 1.12 * inch * 1.45  # 45% larger
-            spec_h = 0.16 * inch * 1.45  # 45% larger
-            spec_x = current_x - spec_w + (15 / 72 * inch)  # Move 15pt to the right
-            c.drawImage(spec_symbols, spec_x, symbol_row_y - 0.13 * inch * 1.25,  # Adjust for larger symbol size
+            spec_base_scale = 1.45 * 1.20 * GLOBAL_SCALE  # Previous * new +20% * global
+            spec_w = 1.12 * inch * spec_base_scale
+            spec_h = 0.16 * inch * spec_base_scale
+            spec_x = current_x - spec_w + (15 / 72 * inch) - 20.2  # Previous +15pt + new -20.2pt X
+            spec_y_shift = 5.4  # +5.4pt Y
+            c.drawImage(spec_symbols, spec_x, symbol_row_y - 0.13 * inch * 1.25 - spec_y_shift,
                        width=spec_w, height=spec_h,
                        preserveAspectRatio=True, mask="auto")
         
@@ -258,84 +269,85 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Move entire GTIN/LOT/SN block 10pt down (was 3pt, now 7pt more)
         right_y -= (10 / 72 * inch)
         
-        # GTIN/LOT/SN blocks - moved 2pt to the right
+        # GTIN/LOT/SN blocks
         block_spacing = 11  # Increased from 10 to 11 (1pt more spacing)
-        identifier_x = right_column_left + (2 / 72 * inch) + (4 / 72 * inch)  # Original +2pt, now +4pt more = +6pt X for GTIN
-        udi_icon_size = 0.22 * inch * 0.90  # UDI icon size - 10% smaller
-        icon_size_small = udi_icon_size  # Make LOT and SN same size as UDI
-        icon_number_gap = 0.05 * inch + (1 / 72 * inch)  # Add 1pt more spacing
+        identifier_base_x = right_column_left + (2 / 72 * inch) + (4 / 72 * inch) - 25.3  # Previous adjustments + new -25.3pt X
+        udi_icon_size = 0.22 * inch * 0.90 * GLOBAL_SCALE  # Previous * global
+        icon_size_small = udi_icon_size
+        icon_number_gap = 0.05 * inch + (1 / 72 * inch)
         
-        # Calculate the maximum width needed for labels/icons to align numbers
-        gtin_font_size = 6.5 * 0.85 * 1.10  # 15% smaller, then +10% = 6.5 * 0.935
+        # GTIN: +10% font scale, -25.3pt X, +6.5pt Y
+        gtin_font_size = 6.5 * 0.85 * 1.10 * 1.10 * GLOBAL_SCALE  # Previous * old +10% * new +10% * global
+        gtin_y_shift = (-2 / 72 * inch) + 6.5  # Previous -2pt + new +6.5pt Y
         c.setFont("Helvetica-Bold", gtin_font_size)
         gtin_label_width = c.stringWidth("GTIN", "Helvetica-Bold", gtin_font_size)
         
-        # The maximum width is either the GTIN label or the icon size
         max_label_width = max(gtin_label_width, icon_size_small)
-        number_start_x = identifier_x + max_label_width + icon_number_gap
+        number_start_x = identifier_base_x + max_label_width + icon_number_gap
         
-        # FIX 2: GTIN block - "GTIN" text LEFT of number, Size +10%, Shift +4pt X, -2pt Y
-        gtin_y_shift = -2 / 72 * inch  # Shift -2pt Y
         c.setFont("Helvetica-Bold", gtin_font_size)
-        c.drawString(identifier_x, right_y + gtin_y_shift, "GTIN")
+        c.drawString(identifier_base_x, right_y + gtin_y_shift, "GTIN")
         
-        number_font_size = 5 * 0.95  # Numbers 5% smaller
+        number_font_size = 5 * 0.95 * GLOBAL_SCALE  # Previous * global
         c.setFont("Helvetica", number_font_size)
-        # Position GTIN number at aligned position
         c.drawString(number_start_x, right_y + gtin_y_shift, f"(01){product['gtin']}")
         right_y -= block_spacing
         
-        # FIX 3 & 4: LOT block - NO "LOT" text, just icon (image8) and value
+        # LOT block: +15% icon scale, +10% text scale, -26.1pt X, +11.9pt Y
+        lot_identifier_x = right_column_left + (2 / 72 * inch) - 26.1  # -26.1pt X
+        lot_y_shift = 11.9  # +11.9pt Y
+        lot_icon_size = icon_size_small * 1.15  # +15% icon scale
+        
         if manufacturer_symbol_empty:
-            # Move LOT icon 2pt up
-            c.drawImage(manufacturer_symbol_empty, identifier_x, right_y - (icon_size_small * 0.55) + (2 / 72 * inch),
-                       width=icon_size_small, height=icon_size_small,
+            c.drawImage(manufacturer_symbol_empty, lot_identifier_x, right_y - (lot_icon_size * 0.55) + (2 / 72 * inch) + lot_y_shift,
+                       width=lot_icon_size, height=lot_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        c.setFont("Helvetica", number_font_size)
-        # Position LOT value at aligned position
-        c.drawString(number_start_x, right_y, f"(11){mfg_date}")
+        lot_font_size = number_font_size * 1.10  # +10% text scale
+        c.setFont("Helvetica", lot_font_size)
+        lot_number_x = lot_identifier_x + max_label_width + icon_number_gap
+        c.drawString(lot_number_x, right_y + lot_y_shift, f"(11){mfg_date}")
         right_y -= block_spacing
         
-        # FIX 5: SN block - NO "SN" text, just icon and value, Size +6%, Shift +12pt X, 0pt Y
-        sn_identifier_x = right_column_left + (2 / 72 * inch) + (12 / 72 * inch)  # Original +2pt, now +12pt more = +14pt X
+        # SN block: +12% scale, -26.1pt X, +16.7pt Y
+        sn_identifier_x = right_column_left + (2 / 72 * inch) + (12 / 72 * inch) - 26.1  # Previous adjustments + new -26.1pt X
+        sn_y_shift = 16.7  # +16.7pt Y
+        sn_icon_size = icon_size_small * 1.12  # +12% icon scale
         
         if sn_symbol:
-            c.drawImage(sn_symbol, sn_identifier_x, right_y - (icon_size_small * 0.55),
-                       width=icon_size_small, height=icon_size_small,
+            c.drawImage(sn_symbol, sn_identifier_x, right_y - (sn_icon_size * 0.55) + sn_y_shift,
+                       width=sn_icon_size, height=sn_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        sn_font_size = number_font_size * 1.06  # +6% size
+        sn_font_size = number_font_size * 1.06 * 1.12  # Previous +6% * new +12%
         c.setFont("Helvetica", sn_font_size)
-        # Position SN value at aligned position from LOT (no Y shift from original right_y)
         sn_number_x = sn_identifier_x + max_label_width + icon_number_gap
-        c.drawString(sn_number_x, right_y, f"(21){serial}")
+        c.drawString(sn_number_x, right_y + sn_y_shift, f"(21){serial}")
         
-        # QR CODE - 35% larger, positioned to align with CE logo right edge and EC REP text bottom, moved down 10pt
+        # QR CODE: +28% scale, -30.3pt X, +19pt Y
         qr_size_original = 0.72 * inch
-        qr_size = qr_size_original * 1.35  # 35% larger
+        qr_base_scale = 1.35 * 1.28 * GLOBAL_SCALE  # Previous 35% * new +28% * global
+        qr_size = qr_size_original * qr_base_scale
         qr_size_px = int(qr_size * 6.0)  # High resolution for maximum sharpness
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
-        # Position QR code:
-        # - Right edge aligned with CE mark right edge
-        # - Bottom edge aligned with EC REP text end, then moved down 10pt
-        qr_x = ce_mark_right_edge - qr_size
-        qr_y = ec_rep_text_end_y - (10 / 72 * inch)  # Move down 10pt
+        # Position: -30.3pt X, +19pt Y
+        qr_x = ce_mark_right_edge - qr_size - 30.3
+        qr_y = ec_rep_text_end_y - (10 / 72 * inch) + 19.0  # Previous -10pt + new +19pt Y
         
         c.drawImage(qr_img, qr_x, qr_y, 
                    width=qr_size, height=qr_size)
         
-        # FIX 1: UDI - use image14.png icon next to QR code (no text)
-        # Maintain the same distance from QR code, so it moves with the QR code
+        # UDI label: +20% scale, -27.8pt X, +17.9pt Y
         udi_icon_y = qr_y + (qr_size / 2)
-        udi_icon_size = 0.22 * inch * 0.90  # 10% smaller
-        udi_qr_gap = 0.08 * inch  # Fixed gap between UDI and QR
+        udi_base_scale = 0.90 * 1.20 * GLOBAL_SCALE  # Previous 90% * new +20% * global
+        udi_icon_size = 0.22 * inch * udi_base_scale
+        udi_qr_gap = 0.08 * inch
         
         if udi_symbol:
-            # Position UDI icon to the left of QR code, vertically centered, maintaining gap
-            udi_icon_x = qr_x - udi_icon_size - udi_qr_gap
-            c.drawImage(udi_symbol, udi_icon_x, udi_icon_y - (udi_icon_size / 2),
+            udi_icon_x = qr_x - udi_icon_size - udi_qr_gap - 27.8  # -27.8pt X
+            udi_icon_y_adjusted = udi_icon_y + 17.9  # +17.9pt Y
+            c.drawImage(udi_symbol, udi_icon_x, udi_icon_y_adjusted - (udi_icon_size / 2),
                        width=udi_icon_size, height=udi_icon_size,
                        preserveAspectRatio=True, mask="auto")
 
