@@ -4,16 +4,15 @@ import csv
 import os
 from io import BytesIO
 from PIL import Image
-from reportlab.lib.pagesizes import inch
+from reportlab.lib.pagesizes import inch, A4, landscape
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 import qrcode
 import json
 
-# Label dimensions: 3" x 2"
-LABEL_WIDTH = 3 * inch
-LABEL_HEIGHT = 2 * inch
+# A4 landscape dimensions
+PAGE_WIDTH, PAGE_HEIGHT = landscape(A4)  # 11.69 x 8.27 inches (297mm x 210mm)
 
 def validate_manufacturing_date(mfg_date):
     """Validate manufacturing date in YYMMDD format"""
@@ -66,8 +65,8 @@ def load_image_safe(path):
     return None
 
 def create_label_pdf(product, mfg_date, serial_start, count, output_file):
-    """Create PDF matching original exactly"""
-    c = canvas.Canvas(output_file, pagesize=(LABEL_WIDTH, LABEL_HEIGHT))
+    """Create PDF with A4 landscape pages"""
+    c = canvas.Canvas(output_file, pagesize=landscape(A4))
 
     # Load assets
     logo = load_image_safe("assets/2a82bf22-0bef-4cfb-830f-349f1fc793ef-1.png")
@@ -80,14 +79,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     udi_symbol = load_image_safe("assets/image14.png")  # FIX 1: Use next to QR
     spec_symbols = load_image_safe("assets/Screenshot 2026-01-28 100951.png")
 
-    # Layout parameters
-    left_margin = 0.15 * inch
-    top_margin = 0.14 * inch
-    right_margin = 0.18 * inch
-    bottom_margin = 0.14 * inch
+    # Layout parameters for A4 landscape
+    left_margin = 0.5 * inch  # Increased for A4
+    top_margin = 0.5 * inch   # Increased for A4
+    right_margin = 0.5 * inch # Increased for A4
+    bottom_margin = 0.5 * inch # Increased for A4
     
     # Two-column grid
-    usable_width = LABEL_WIDTH - left_margin - right_margin
+    usable_width = PAGE_WIDTH - left_margin - right_margin
     left_column_width = usable_width * 0.62
     column_gap = 0.10 * inch
     right_column_left = left_margin + left_column_width + column_gap
@@ -98,10 +97,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         if i > 0:
             c.showPage()
-            c.setPageSize((LABEL_WIDTH, LABEL_HEIGHT))
+            c.setPageSize(landscape(A4))
 
         # === LEFT COLUMN ===
-        left_y = LABEL_HEIGHT - top_margin
+        left_y = PAGE_HEIGHT - top_margin
         
         # Logo - 58% larger (50% + 8%), shifted +6pt X, +4pt Y
         if logo:
@@ -223,14 +222,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         ec_rep_text_end_y = left_y
         
         # === RIGHT COLUMN ===
-        right_y = LABEL_HEIGHT - top_margin
+        right_y = PAGE_HEIGHT - top_margin
         
         # Regulatory symbols - MD and CE: Size 0% (keep current 25%), Shift -6pt Y
         symbol_row_y = right_y - 0.02 * inch - (6 / 72 * inch)  # Shift -6pt Y
         symbol_size = 0.13 * inch * 1.25  # 25% larger for CE and MD (no additional change)
         symbol_spacing = 0.04 * inch
         
-        current_x = LABEL_WIDTH - right_margin - symbol_size
+        current_x = PAGE_WIDTH - right_margin - symbol_size
         ce_mark_right_edge = current_x + symbol_size  # Store CE mark right edge for QR alignment
         
         if ce_mark:
