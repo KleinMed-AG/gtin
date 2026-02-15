@@ -100,75 +100,97 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # === LEFT COLUMN ===
         
-        # Logo - move another 10pt to the left (total 20pt left from margin)
+        # Logo - Move LEFT -9pt, UP -3pt, Reduce size -4.8%
         if logo:
-            logo_w = 130 * mm
-            logo_h = 38 * mm
-            logo_x = left_margin - 20  # Move another 10pt left (total 20pt)
-            c.drawImage(logo, logo_x, y_pos - logo_h,
+            logo_scale = 0.952  # -4.8% size reduction
+            logo_w = 130 * mm * logo_scale
+            logo_h = 38 * mm * logo_scale
+            logo_x = left_margin - 20 - 9  # Was -20pt, now -29pt (move left 9pt more)
+            logo_y_offset = -3  # Move UP -3pt
+            c.drawImage(logo, logo_x, y_pos - logo_h + logo_y_offset,
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
-            y_pos -= (logo_h + 5 * mm)
+            y_pos -= (logo_h + 5 * mm - logo_y_offset)
 
-        # Product titles (4 languages) - 50% larger: 16pt → 24pt
-        c.setFont("Helvetica-Bold", 24)
+        # Product titles (4 languages) - Move LEFT -5.5pt, UP -2pt, Reduce font -2%
+        title_font_size = 24 * 0.98  # -2% font size
+        title_x = left_margin - 5.5  # Move LEFT -5.5pt
+        title_y_offset = -2  # Move UP -2pt
+        y_pos += title_y_offset
+        
+        c.setFont("Helvetica-Bold", title_font_size)
         line_height = 9 * mm
-        c.drawString(left_margin, y_pos, product["name_de"])
+        c.drawString(title_x, y_pos, product["name_de"])
         y_pos -= line_height
-        c.drawString(left_margin, y_pos, product["name_en"])
+        c.drawString(title_x, y_pos, product["name_en"])
         y_pos -= line_height
-        c.drawString(left_margin, y_pos, product["name_fr"])
+        c.drawString(title_x, y_pos, product["name_fr"])
         y_pos -= line_height
-        c.drawString(left_margin, y_pos, product["name_it"])
+        c.drawString(title_x, y_pos, product["name_it"])
         y_pos -= 12 * mm
 
-        # Description (pain relief text) - 50% larger: 11pt → 16.5pt
+        # Description (pain relief text) - Move LEFT -4.5pt, UP -3.5pt
+        desc_x = left_margin - 4.5  # Move LEFT -4.5pt
+        desc_y_offset = -3.5  # Move UP -3.5pt
+        y_pos += desc_y_offset
+        
         c.setFont("Helvetica", 16.5)
         desc_line_height = 6.75 * mm
-        c.drawString(left_margin, y_pos, product["description_de"][:100])
+        c.drawString(desc_x, y_pos, product["description_de"][:100])
         y_pos -= desc_line_height
-        c.drawString(left_margin, y_pos, product["description_en"][:100])
+        c.drawString(desc_x, y_pos, product["description_en"][:100])
         y_pos -= desc_line_height
-        c.drawString(left_margin, y_pos, product["description_fr"][:100])
+        c.drawString(desc_x, y_pos, product["description_fr"][:100])
         y_pos -= desc_line_height
-        c.drawString(left_margin, y_pos, product["description_it"][:100])
+        c.drawString(desc_x, y_pos, product["description_it"][:100])
         y_pos -= 22.5 * mm
 
-        # Manufacturer block - icon 2x bigger: 10mm → 20mm
+        # Manufacturer block - Move RIGHT +10pt, UP -7pt, Reduce scale -6%
+        mfr_scale = 0.94  # -6% scale reduction
+        mfr_x_offset = 10  # Move RIGHT +10pt
+        mfr_y_offset = -7  # Move UP -7pt
+        y_pos += mfr_y_offset
         mfr_y = y_pos
+        
         if manufacturer_symbol:
-            icon_size = 20 * mm
-            c.drawImage(manufacturer_symbol, left_margin, mfr_y - icon_size,
+            icon_size = 20 * mm * mfr_scale
+            c.drawImage(manufacturer_symbol, left_margin + mfr_x_offset, mfr_y - icon_size,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        # Text 50% larger: 11pt → 16.5pt
-        # Use same text_x position for both manufacturer and EC REP
-        text_x = left_margin + 24 * mm
-        c.setFont("Helvetica", 16.5)
+        # Text with reduced scale
+        mfr_font_size = 16.5 * mfr_scale
+        c.setFont("Helvetica", mfr_font_size)
+        text_x = left_margin + 24 * mm * mfr_scale + mfr_x_offset
         c.drawString(text_x, mfr_y, product["manufacturer"]["name"])
         mfr_y -= 6.75 * mm
-        c.setFont("Helvetica", 16.5)
+        c.setFont("Helvetica", mfr_font_size)
         c.drawString(text_x, mfr_y, product["manufacturer"]["address_line1"])
         mfr_y -= 6.75 * mm
         c.drawString(text_x, mfr_y, product["manufacturer"]["address_line2"])
         y_pos = mfr_y - 12 * mm
 
-        # EC REP block - icon 2x bigger AGAIN: 20mm → 40mm (total 4x original)
+        # EC REP block - Move RIGHT +8pt, UP -5pt, Reduce scale -3.5%
+        ec_scale = 0.965  # -3.5% scale reduction
+        ec_x_offset = 8  # Move RIGHT +8pt
+        ec_y_offset = -5  # Move UP -5pt
+        y_pos += ec_y_offset
         ec_y = y_pos
+        
         if ec_rep_symbol:
-            icon_size = 40 * mm
-            c.drawImage(ec_rep_symbol, left_margin, ec_y - icon_size,
+            icon_size = 40 * mm * ec_scale
+            c.drawImage(ec_rep_symbol, left_margin + ec_x_offset, ec_y - icon_size,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        # Text 50% larger: 11pt → 16.5pt
-        # IMPORTANT: Use same text_x position as manufacturer (text_x = left_margin + 24mm)
-        c.setFont("Helvetica", 16.5)
-        c.drawString(text_x, ec_y, product["distributor"]["name"])
+        # Text with reduced scale - align with manufacturer text
+        ec_font_size = 16.5 * ec_scale
+        c.setFont("Helvetica", ec_font_size)
+        text_x_ec = left_margin + 24 * mm * mfr_scale + mfr_x_offset  # Use same alignment as manufacturer
+        c.drawString(text_x_ec, ec_y, product["distributor"]["name"])
         ec_y -= 6.75 * mm
-        c.setFont("Helvetica", 16.5)
-        c.drawString(text_x, ec_y, product["distributor"]["address_line1"])
+        c.setFont("Helvetica", ec_font_size)
+        c.drawString(text_x_ec, ec_y, product["distributor"]["address_line1"])
         ec_y -= 6.75 * mm
         
         address_line2 = product["distributor"]["address_line2"]
@@ -176,32 +198,35 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             parts = address_line2.split()
             if len(parts) >= 3:
                 address_line2 = f"{parts[0]} {parts[1]}, {' '.join(parts[2:])}"
-        c.drawString(text_x, ec_y, address_line2)
+        c.drawString(text_x_ec, ec_y, address_line2)
 
         # === RIGHT COLUMN ===
         
         right_y = PAGE_HEIGHT - top_margin
 
-        # Top symbols row - CE/MD 2x bigger: 12mm → 24mm
-        symbol_y = right_y - 2 * mm
+        # Top symbols row - Move LEFT -7.5pt, UP -2.5pt, Reduce scale -4.5%
+        symbol_scale = 0.955  # -4.5% scale reduction
+        symbol_x_offset = -7.5  # Move LEFT -7.5pt
+        symbol_y_offset = -2.5  # Move UP -2.5pt
+        symbol_y = right_y - 2 * mm + symbol_y_offset
         
-        # CE mark (rightmost) - 2x bigger
-        ce_size = 24 * mm
-        ce_x = PAGE_WIDTH - left_margin - ce_size
+        # CE mark (rightmost)
+        ce_size = 24 * mm * symbol_scale
+        ce_x = PAGE_WIDTH - left_margin - ce_size + symbol_x_offset
         if ce_mark:
             c.drawImage(ce_mark, ce_x, symbol_y - ce_size,
                        width=ce_size, height=ce_size,
                        preserveAspectRatio=True, mask="auto")
         
-        # MD symbol - 2x bigger
-        md_size = 24 * mm
+        # MD symbol
+        md_size = 24 * mm * symbol_scale
         md_x = ce_x - md_size - 6 * mm
         if md_symbol:
             c.drawImage(md_symbol, md_x, symbol_y - md_size,
                        width=md_size, height=md_size,
                        preserveAspectRatio=True, mask="auto")
         
-        # Spec symbols (3-box strip) - 2x bigger: 50mm × 12mm → 100mm × 24mm
+        # Spec symbols (3-box strip) - keep existing size
         if spec_symbols:
             spec_w = 100 * mm
             spec_h = 24 * mm
@@ -212,56 +237,73 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_y -= 37.5 * mm
 
-        # GTIN/LOT/SN blocks - Move further to the right to match original
-        label_col_x = PAGE_WIDTH - 155 * mm  # GTIN label position (moved further right)
-        value_col_x = label_col_x + 45 * mm  # Value position (with more space)
-        icon_col_x = label_col_x - 20 * mm   # Icon position (to left of label)
+        # GTIN/LOT/SN blocks - adjustments
+        gtin_x_offset = -11  # Move LEFT -11pt
+        gtin_y_offset = -1.5  # Move UP -1.5pt
+        gtin_scale = 0.98  # -2% size reduction
         
-        # GTIN - text 50% larger: 14pt → 21pt, LEFT-ALIGNED
-        c.setFont("Helvetica-Bold", 21)
+        label_col_x = PAGE_WIDTH - 155 * mm + gtin_x_offset  # GTIN label position
+        value_col_x = label_col_x + 45 * mm  # Value position
+        icon_col_x = label_col_x - 20 * mm   # Icon position
+        
+        # GTIN - Move LEFT -11pt, UP -1.5pt, Reduce size -2%
+        gtin_font_size = 21 * gtin_scale
+        c.setFont("Helvetica-Bold", gtin_font_size)
         gtin_label = "GTIN"
-        c.drawString(label_col_x, right_y, gtin_label)
+        c.drawString(label_col_x, right_y + gtin_y_offset, gtin_label)
         
-        # Value 50% larger: 12pt → 18pt, LEFT-ALIGNED
+        # Value
         c.setFont("Helvetica", 18)
-        c.drawString(value_col_x, right_y, f"(01){product['gtin']}")
+        c.drawString(value_col_x, right_y + gtin_y_offset, f"(01){product['gtin']}")
         right_y -= 15 * mm
         
-        # LOT with factory icon - icon 2x bigger: 8mm → 16mm, LEFT-ALIGNED
-        icon_box_size = 16 * mm
+        # LOT with factory icon - Move RIGHT +7pt, DOWN +9pt, Increase scale +4%
+        lot_x_offset = 7  # Move RIGHT +7pt
+        lot_y_offset = 9  # Move DOWN +9pt
+        lot_scale = 1.04  # +4% scale increase
+        
+        icon_box_size = 16 * mm * lot_scale
         if manufacturer_symbol_empty:
-            c.drawImage(manufacturer_symbol_empty, icon_col_x, right_y - icon_box_size/2 - 1.5*mm,
+            c.drawImage(manufacturer_symbol_empty, icon_col_x + lot_x_offset, right_y - icon_box_size/2 - 1.5*mm - lot_y_offset,
                        width=icon_box_size, height=icon_box_size,
                        preserveAspectRatio=True, mask="auto")
         c.setFont("Helvetica", 18)
-        c.drawString(value_col_x, right_y, f"(11){mfg_date}")
+        c.drawString(value_col_x + lot_x_offset, right_y - lot_y_offset, f"(11){mfg_date}")
         right_y -= 15 * mm
         
-        # SN with IMAGE icon (not text box) - icon 2x bigger: 8mm → 16mm, LEFT-ALIGNED
+        # SN with IMAGE icon - Move RIGHT +7pt, DOWN +9pt, Increase scale +4%
         if sn_symbol:
-            sn_icon_size = 16 * mm
-            c.drawImage(sn_symbol, icon_col_x, right_y - sn_icon_size/2 - 1.5*mm,
+            sn_icon_size = 16 * mm * lot_scale
+            c.drawImage(sn_symbol, icon_col_x + lot_x_offset, right_y - sn_icon_size/2 - 1.5*mm - lot_y_offset,
                        width=sn_icon_size, height=sn_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", 18)
-        c.drawString(value_col_x, right_y, f"(21){serial}")
+        c.drawString(value_col_x + lot_x_offset, right_y - lot_y_offset, f"(21){serial}")
 
-        # QR Code - 25% smaller: 136mm → 102mm (136 * 0.75)
-        qr_size = 102 * mm  # 25% smaller
+        # QR Code - Move RIGHT +17pt, UP -8pt, Reduce size -11%
+        qr_scale = 0.89  # -11% size reduction
+        qr_x_offset = 17  # Move RIGHT +17pt
+        qr_y_offset = -8  # Move UP -8pt
+        
+        qr_size = 102 * mm * qr_scale
         qr_size_px = int(qr_size * 4)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
-        qr_x = PAGE_WIDTH - left_margin - qr_size
-        qr_y = 12 * mm
+        qr_x = PAGE_WIDTH - left_margin - qr_size + qr_x_offset
+        qr_y = 12 * mm + qr_y_offset
         c.drawImage(qr_img, qr_x, qr_y,
                    width=qr_size, height=qr_size)
         
-        # UDI with IMAGE icon (not text box) - icon 2x bigger: 16mm → 32mm
+        # UDI with IMAGE icon - Move RIGHT +13pt, UP -6pt, Reduce scale -9%
+        udi_scale = 0.91  # -9% scale reduction
+        udi_x_offset = 13  # Move RIGHT +13pt
+        udi_y_offset = -6  # Move UP -6pt
+        
         if udi_symbol:
-            udi_icon_size = 32 * mm
-            udi_icon_x = qr_x - udi_icon_size - 9 * mm
-            udi_icon_y = qr_y + (qr_size - udi_icon_size) / 2
+            udi_icon_size = 32 * mm * udi_scale
+            udi_icon_x = qr_x - udi_icon_size - 9 * mm + udi_x_offset
+            udi_icon_y = qr_y + (qr_size - udi_icon_size) / 2 + udi_y_offset
             c.drawImage(udi_symbol, udi_icon_x, udi_icon_y,
                        width=udi_icon_size, height=udi_icon_size,
                        preserveAspectRatio=True, mask="auto")
