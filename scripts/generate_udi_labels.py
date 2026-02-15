@@ -100,22 +100,22 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # === LEFT COLUMN ===
         
-        # Logo - Move LEFT -9pt, UP -3pt, Reduce size -4.8%
+        # Logo - Cumulative adjustments: Move LEFT -3pt more, UP -1pt more, Reduce -1.5% more
         if logo:
-            logo_scale = 0.952  # -4.8% size reduction
+            logo_scale = 0.952 * 0.985  # Previous -4.8% * new -1.5% = -6.22% total
             logo_w = 130 * mm * logo_scale
             logo_h = 38 * mm * logo_scale
-            logo_x = left_margin - 20 - 9  # Was -20pt, now -29pt (move left 9pt more)
-            logo_y_offset = -3  # Move UP -3pt
+            logo_x = left_margin - 20 - 9 - 3  # Previous -29pt + new -3pt = -32pt total
+            logo_y_offset = -3 - 1  # Previous -3pt + new -1pt = -4pt total
             c.drawImage(logo, logo_x, y_pos - logo_h + logo_y_offset,
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
             y_pos -= (logo_h + 5 * mm - logo_y_offset)
 
-        # Product titles (4 languages) - Move LEFT -5.5pt, UP -2pt, Reduce font -2%
-        title_font_size = 24 * 0.98  # -2% font size
-        title_x = left_margin - 5.5  # Move LEFT -5.5pt
-        title_y_offset = -2  # Move UP -2pt
+        # Product titles (4 languages) - Cumulative: Move LEFT -2pt more, UP -1.5pt more, Reduce -1% more
+        title_font_size = 24 * 0.98 * 0.99  # Previous -2% * new -1% = -2.98% total
+        title_x = left_margin - 5.5 - 2  # Previous -5.5pt + new -2pt = -7.5pt total
+        title_y_offset = -2 - 1.5  # Previous -2pt + new -1.5pt = -3.5pt total
         y_pos += title_y_offset
         
         c.setFont("Helvetica-Bold", title_font_size)
@@ -145,10 +145,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(desc_x, y_pos, product["description_it"][:100])
         y_pos -= 22.5 * mm
 
-        # Manufacturer block - Move RIGHT +10pt, UP -7pt, Reduce scale -6%
-        mfr_scale = 0.94  # -6% scale reduction
-        mfr_x_offset = 10  # Move RIGHT +10pt
-        mfr_y_offset = -7  # Move UP -7pt
+        # Manufacturer block - Cumulative: Move RIGHT +5.5pt more, UP -3pt more, Reduce -4% more
+        mfr_scale = 0.94 * 0.96  # Previous -6% * new -4% = -9.76% total
+        mfr_x_offset = 10 + 5.5  # Previous +10pt + new +5.5pt = +15.5pt total
+        mfr_y_offset = -7 - 3  # Previous -7pt + new -3pt = -10pt total
         y_pos += mfr_y_offset
         mfr_y = y_pos
         
@@ -170,10 +170,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(text_x, mfr_y, product["manufacturer"]["address_line2"])
         y_pos = mfr_y - 12 * mm
 
-        # EC REP block - Move RIGHT +8pt, UP -5pt, Reduce scale -3.5%
-        ec_scale = 0.965  # -3.5% scale reduction
-        ec_x_offset = 8  # Move RIGHT +8pt
-        ec_y_offset = -5  # Move UP -5pt
+        # EC REP block - Cumulative: Move RIGHT +4pt more, UP -2pt more, Reduce -2% more
+        ec_scale = 0.965 * 0.98  # Previous -3.5% * new -2% = -5.43% total
+        ec_x_offset = 8 + 4  # Previous +8pt + new +4pt = +12pt total
+        ec_y_offset = -5 - 2  # Previous -5pt + new -2pt = -7pt total
         y_pos += ec_y_offset
         ec_y = y_pos
         
@@ -204,10 +204,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_y = PAGE_HEIGHT - top_margin
 
-        # Top symbols row - Move LEFT -7.5pt, UP -2.5pt, Reduce scale -4.5%
-        symbol_scale = 0.955  # -4.5% scale reduction
-        symbol_x_offset = -7.5  # Move LEFT -7.5pt
-        symbol_y_offset = -2.5  # Move UP -2.5pt
+        # Top symbols row - Cumulative: Move LEFT -2pt more, UP -1pt more, Reduce -1.5% more
+        symbol_scale = 0.955 * 0.985  # Previous -4.5% * new -1.5% = -5.93% total
+        symbol_x_offset = -7.5 - 2  # Previous -7.5pt + new -2pt = -9.5pt total
+        symbol_y_offset = -2.5 - 1  # Previous -2.5pt + new -1pt = -3.5pt total
         symbol_y = right_y - 2 * mm + symbol_y_offset
         
         # CE mark (rightmost)
@@ -237,16 +237,16 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_y -= 37.5 * mm
 
-        # GTIN/LOT/SN blocks - adjustments
-        gtin_x_offset = -11  # Move LEFT -11pt
-        gtin_y_offset = -1.5  # Move UP -1.5pt
-        gtin_scale = 0.98  # -2% size reduction
+        # GTIN/LOT/SN blocks - Cumulative adjustments
+        gtin_x_offset = -11 - 3.5  # Previous -11pt + new -3.5pt = -14.5pt total
+        gtin_y_offset = -1.5 - 0.5  # Previous -1.5pt + new -0.5pt = -2pt total
+        gtin_scale = 0.98 * 0.99  # Previous -2% * new -1% = -2.98% total
         
         label_col_x = PAGE_WIDTH - 155 * mm + gtin_x_offset  # GTIN label position
         value_col_x = label_col_x + 45 * mm  # Value position
         icon_col_x = label_col_x - 20 * mm   # Icon position
         
-        # GTIN - Move LEFT -11pt, UP -1.5pt, Reduce size -2%
+        # GTIN - Cumulative: Move LEFT -3.5pt more, UP -0.5pt more, Reduce -1% more
         gtin_font_size = 21 * gtin_scale
         c.setFont("Helvetica-Bold", gtin_font_size)
         gtin_label = "GTIN"
@@ -257,10 +257,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(value_col_x, right_y + gtin_y_offset, f"(01){product['gtin']}")
         right_y -= 15 * mm
         
-        # LOT with factory icon - Move RIGHT +7pt, DOWN +9pt, Increase scale +4%
-        lot_x_offset = 7  # Move RIGHT +7pt
-        lot_y_offset = 9  # Move DOWN +9pt
-        lot_scale = 1.04  # +4% scale increase
+        # LOT with factory icon - Cumulative: Move RIGHT +2.5pt more, DOWN +4.5pt more, Increase +2% more
+        lot_x_offset = 7 + 2.5  # Previous +7pt + new +2.5pt = +9.5pt total
+        lot_y_offset = 9 + 4.5  # Previous +9pt + new +4.5pt = +13.5pt total
+        lot_scale = 1.04 * 1.02  # Previous +4% * new +2% = +6.08% total
         
         icon_box_size = 16 * mm * lot_scale
         if manufacturer_symbol_empty:
@@ -271,7 +271,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(value_col_x + lot_x_offset, right_y - lot_y_offset, f"(11){mfg_date}")
         right_y -= 15 * mm
         
-        # SN with IMAGE icon - Move RIGHT +7pt, DOWN +9pt, Increase scale +4%
+        # SN with IMAGE icon - Cumulative: Move RIGHT +2.5pt more, DOWN +4.5pt more, Increase +2% more
         if sn_symbol:
             sn_icon_size = 16 * mm * lot_scale
             c.drawImage(sn_symbol, icon_col_x + lot_x_offset, right_y - sn_icon_size/2 - 1.5*mm - lot_y_offset,
@@ -281,10 +281,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.setFont("Helvetica", 18)
         c.drawString(value_col_x + lot_x_offset, right_y - lot_y_offset, f"(21){serial}")
 
-        # QR Code - Move RIGHT +17pt, UP -8pt, Reduce size -11%
-        qr_scale = 0.89  # -11% size reduction
-        qr_x_offset = 17  # Move RIGHT +17pt
-        qr_y_offset = -8  # Move UP -8pt
+        # QR Code - Cumulative: Move RIGHT +6pt more, UP -3pt more, Reduce -6% more
+        qr_scale = 0.89 * 0.94  # Previous -11% * new -6% = -16.34% total
+        qr_x_offset = 17 + 6  # Previous +17pt + new +6pt = +23pt total
+        qr_y_offset = -8 - 3  # Previous -8pt + new -3pt = -11pt total
         
         qr_size = 102 * mm * qr_scale
         qr_size_px = int(qr_size * 4)
@@ -295,10 +295,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawImage(qr_img, qr_x, qr_y,
                    width=qr_size, height=qr_size)
         
-        # UDI with IMAGE icon - Move RIGHT +13pt, UP -6pt, Reduce scale -9%
-        udi_scale = 0.91  # -9% scale reduction
-        udi_x_offset = 13  # Move RIGHT +13pt
-        udi_y_offset = -6  # Move UP -6pt
+        # UDI with IMAGE icon - Cumulative: Move RIGHT +4.5pt more, UP -2.5pt more, Reduce -4.5% more
+        udi_scale = 0.91 * 0.955  # Previous -9% * new -4.5% = -13.095% total
+        udi_x_offset = 13 + 4.5  # Previous +13pt + new +4.5pt = +17.5pt total
+        udi_y_offset = -6 - 2.5  # Previous -6pt + new -2.5pt = -8.5pt total
         
         if udi_symbol:
             udi_icon_size = 32 * mm * udi_scale
