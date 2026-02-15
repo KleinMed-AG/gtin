@@ -212,10 +212,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_y -= 37.5 * mm
 
-        # GTIN/LOT/SN blocks - LEFT-ALIGNED (not right-aligned)
-        icon_col_x = PAGE_WIDTH - 142 * mm  # Icon column position
-        label_col_x = icon_col_x + 18 * mm  # Label starts after icon
-        value_col_x = label_col_x + 30 * mm  # Value starts after label
+        # GTIN/LOT/SN blocks - Move further to the right to match original
+        label_col_x = PAGE_WIDTH - 155 * mm  # GTIN label position (moved further right)
+        value_col_x = label_col_x + 45 * mm  # Value position (with more space)
+        icon_col_x = label_col_x - 20 * mm   # Icon position (to left of label)
         
         # GTIN - text 50% larger: 14pt → 21pt, LEFT-ALIGNED
         c.setFont("Helvetica-Bold", 21)
