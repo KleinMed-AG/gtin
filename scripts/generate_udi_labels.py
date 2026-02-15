@@ -100,11 +100,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # === LEFT COLUMN ===
         
-        # Logo - move 10pt to the left to align with text
+        # Logo - move another 10pt to the left (total 20pt left from margin)
         if logo:
             logo_w = 130 * mm
             logo_h = 38 * mm
-            logo_x = left_margin - 10  # Move 10pt left
+            logo_x = left_margin - 20  # Move another 10pt left (total 20pt)
             c.drawImage(logo, logo_x, y_pos - logo_h,
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
@@ -143,8 +143,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        preserveAspectRatio=True, mask="auto")
         
         # Text 50% larger: 11pt → 16.5pt
-        c.setFont("Helvetica", 16.5)
+        # Use same text_x position for both manufacturer and EC REP
         text_x = left_margin + 24 * mm
+        c.setFont("Helvetica", 16.5)
         c.drawString(text_x, mfr_y, product["manufacturer"]["name"])
         mfr_y -= 6.75 * mm
         c.setFont("Helvetica", 16.5)
@@ -156,18 +157,18 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block - icon 2x bigger AGAIN: 20mm → 40mm (total 4x original)
         ec_y = y_pos
         if ec_rep_symbol:
-            icon_size = 40 * mm  # 2x the previous 20mm = 4x original
+            icon_size = 40 * mm
             c.drawImage(ec_rep_symbol, left_margin, ec_y - icon_size,
                        width=icon_size, height=icon_size,
                        preserveAspectRatio=True, mask="auto")
         
         # Text 50% larger: 11pt → 16.5pt
+        # IMPORTANT: Use same text_x position as manufacturer (text_x = left_margin + 24mm)
         c.setFont("Helvetica", 16.5)
-        text_x_ec = left_margin + 44 * mm  # Adjust for much larger icon
-        c.drawString(text_x_ec, ec_y, product["distributor"]["name"])
+        c.drawString(text_x, ec_y, product["distributor"]["name"])
         ec_y -= 6.75 * mm
         c.setFont("Helvetica", 16.5)
-        c.drawString(text_x_ec, ec_y, product["distributor"]["address_line1"])
+        c.drawString(text_x, ec_y, product["distributor"]["address_line1"])
         ec_y -= 6.75 * mm
         
         address_line2 = product["distributor"]["address_line2"]
@@ -175,7 +176,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             parts = address_line2.split()
             if len(parts) >= 3:
                 address_line2 = f"{parts[0]} {parts[1]}, {' '.join(parts[2:])}"
-        c.drawString(text_x_ec, ec_y, address_line2)
+        c.drawString(text_x, ec_y, address_line2)
 
         # === RIGHT COLUMN ===
         
@@ -211,43 +212,43 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_y -= 37.5 * mm
 
-        # GTIN/LOT/SN blocks - right column positioning
-        right_col_x = PAGE_WIDTH - 95 * mm
-        value_x = PAGE_WIDTH - left_margin - 2 * mm
+        # GTIN/LOT/SN blocks - LEFT-ALIGNED (not right-aligned)
+        icon_col_x = PAGE_WIDTH - 142 * mm  # Icon column position
+        label_col_x = icon_col_x + 18 * mm  # Label starts after icon
+        value_col_x = label_col_x + 30 * mm  # Value starts after label
         
-        # GTIN - text 50% larger: 14pt → 21pt
+        # GTIN - text 50% larger: 14pt → 21pt, LEFT-ALIGNED
         c.setFont("Helvetica-Bold", 21)
         gtin_label = "GTIN"
-        c.drawString(right_col_x, right_y, gtin_label)
+        c.drawString(label_col_x, right_y, gtin_label)
         
-        # Value 50% larger: 12pt → 18pt
+        # Value 50% larger: 12pt → 18pt, LEFT-ALIGNED
         c.setFont("Helvetica", 18)
-        c.drawRightString(value_x, right_y, f"(01){product['gtin']}")
+        c.drawString(value_col_x, right_y, f"(01){product['gtin']}")
         right_y -= 15 * mm
         
-        # LOT with factory icon - icon 2x bigger: 8mm → 16mm
-        icon_x = right_col_x
+        # LOT with factory icon - icon 2x bigger: 8mm → 16mm, LEFT-ALIGNED
         icon_box_size = 16 * mm
         if manufacturer_symbol_empty:
-            c.drawImage(manufacturer_symbol_empty, icon_x, right_y - icon_box_size/2 - 1.5*mm,
+            c.drawImage(manufacturer_symbol_empty, icon_col_x, right_y - icon_box_size/2 - 1.5*mm,
                        width=icon_box_size, height=icon_box_size,
                        preserveAspectRatio=True, mask="auto")
         c.setFont("Helvetica", 18)
-        c.drawRightString(value_x, right_y, f"(11){mfg_date}")
+        c.drawString(value_col_x, right_y, f"(11){mfg_date}")
         right_y -= 15 * mm
         
-        # SN with IMAGE icon (not text box) - icon 2x bigger: 8mm → 16mm
+        # SN with IMAGE icon (not text box) - icon 2x bigger: 8mm → 16mm, LEFT-ALIGNED
         if sn_symbol:
-            sn_icon_size = 16 * mm  # 2x bigger
-            c.drawImage(sn_symbol, icon_x, right_y - sn_icon_size/2 - 1.5*mm,
+            sn_icon_size = 16 * mm
+            c.drawImage(sn_symbol, icon_col_x, right_y - sn_icon_size/2 - 1.5*mm,
                        width=sn_icon_size, height=sn_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
         c.setFont("Helvetica", 18)
-        c.drawRightString(value_x, right_y, f"(21){serial}")
+        c.drawString(value_col_x, right_y, f"(21){serial}")
 
-        # QR Code - 2x bigger: 68mm → 136mm
-        qr_size = 136 * mm  # 2x bigger
+        # QR Code - 25% smaller: 136mm → 102mm (136 * 0.75)
+        qr_size = 102 * mm  # 25% smaller
         qr_size_px = int(qr_size * 4)
         qr_img = generate_qr_code(udi_payload, target_px=qr_size_px)
         
@@ -258,7 +259,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         # UDI with IMAGE icon (not text box) - icon 2x bigger: 16mm → 32mm
         if udi_symbol:
-            udi_icon_size = 32 * mm  # 2x bigger
+            udi_icon_size = 32 * mm
             udi_icon_x = qr_x - udi_icon_size - 9 * mm
             udi_icon_y = qr_y + (qr_size - udi_icon_size) / 2
             c.drawImage(udi_symbol, udi_icon_x, udi_icon_y,
