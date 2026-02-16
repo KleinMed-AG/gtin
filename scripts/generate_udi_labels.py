@@ -122,11 +122,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # === TOP ROW: Logo and Symbols (aligned to T1) ===
         
-        # KleinMed Logo - left aligned to L1
+        # KleinMed Logo - shifted 10pt left from L1
         if logo:
             logo_w = 120 * mm
             logo_h = 35 * mm
-            c.drawImage(logo, L1, y_pos - logo_h,
+            logo_x = L1 - 10  # Shift 10pt left
+            c.drawImage(logo, logo_x, y_pos - logo_h,
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
         
@@ -187,15 +188,18 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === MANUFACTURER BLOCK ===
         mfr_y = y_pos
         mfr_icon_size = 18 * mm
-        mfr_text_x = L1 + mfr_icon_size + 5 * mm
+        # Text moved 15pt right
+        mfr_text_x = L1 + 15
+        # Icon positioned to the left of text
+        mfr_icon_x = mfr_text_x - mfr_icon_size - 3 * mm
         
-        # Factory icon - aligned to L2
+        # Factory icon - to left of text
         if manufacturer_symbol:
-            c.drawImage(manufacturer_symbol, L2, mfr_y - mfr_icon_size,
+            c.drawImage(manufacturer_symbol, mfr_icon_x, mfr_y - mfr_icon_size,
                        width=mfr_icon_size, height=mfr_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        # Text - indented from icon
+        # Text - moved 15pt right
         c.setFont("Helvetica", 15)
         c.drawString(mfr_text_x, mfr_y, product["manufacturer"]["name"])
         mfr_y -= 6 * mm
@@ -207,19 +211,22 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # === EC REP BLOCK ===
         ec_y = y_pos
         ec_icon_size = 36 * mm
-        ec_text_x = L1 + ec_icon_size + 5 * mm
+        # Text moved 15pt right (same as manufacturer)
+        ec_text_x = mfr_text_x  # Align with manufacturer text
+        # Icon positioned to the left of text
+        ec_icon_x = ec_text_x - ec_icon_size - 3 * mm
         
-        # EC REP box - aligned to L2
+        # EC REP box - to left of text
         if ec_rep_symbol:
-            c.drawImage(ec_rep_symbol, L2, ec_y - ec_icon_size,
+            c.drawImage(ec_rep_symbol, ec_icon_x, ec_y - ec_icon_size,
                        width=ec_icon_size, height=ec_icon_size,
                        preserveAspectRatio=True, mask="auto")
         
-        # Text - indented from icon, aligned with manufacturer text
+        # Text - moved 15pt right, aligned with manufacturer
         c.setFont("Helvetica", 15)
-        c.drawString(mfr_text_x, ec_y, product["distributor"]["name"])
+        c.drawString(ec_text_x, ec_y, product["distributor"]["name"])
         ec_y -= 6 * mm
-        c.drawString(mfr_text_x, ec_y, product["distributor"]["address_line1"])
+        c.drawString(ec_text_x, ec_y, product["distributor"]["address_line1"])
         ec_y -= 6 * mm
         
         address_line2 = product["distributor"]["address_line2"]
@@ -227,36 +234,42 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             parts = address_line2.split()
             if len(parts) >= 3:
                 address_line2 = f"{parts[0]} {parts[1]}, {' '.join(parts[2:])}"
-        c.drawString(mfr_text_x, ec_y, address_line2)
+        c.drawString(ec_text_x, ec_y, address_line2)
 
         # === RIGHT COLUMN - Data aligned to C1 ===
         
         right_y = T1 - 35 * mm  # Start below symbols
+        right_spacing = 13 * mm + 4  # Original 13mm + 4pt increase
+        
+        # Numbers moved 15pt right from C1
+        data_value_x = C1 + 15
+        # Icons positioned to the left of numbers
+        icon_x = data_value_x - 45 * mm
         
         # GTIN
         c.setFont("Helvetica-Bold", 20)
-        c.drawString(C1 - 35 * mm, right_y, "GTIN")
+        c.drawString(icon_x, right_y, "GTIN")
         c.setFont("Helvetica", 17)
-        c.drawString(C1, right_y, f"(01){product['gtin']}")
-        right_y -= 13 * mm
+        c.drawString(data_value_x, right_y, f"(01){product['gtin']}")
+        right_y -= right_spacing  # Increased spacing
         
-        # LOT with icon
+        # LOT with icon to left
         lot_icon_size = 17 * mm
         if manufacturer_symbol_empty:
-            c.drawImage(manufacturer_symbol_empty, C1 - 40 * mm, right_y - lot_icon_size/2,
+            c.drawImage(manufacturer_symbol_empty, icon_x, right_y - lot_icon_size/2,
                        width=lot_icon_size, height=lot_icon_size,
                        preserveAspectRatio=True, mask="auto")
         c.setFont("Helvetica", 17)
-        c.drawString(C1, right_y, f"(11){mfg_date}")
-        right_y -= 13 * mm
+        c.drawString(data_value_x, right_y, f"(11){mfg_date}")
+        right_y -= right_spacing  # Increased spacing
         
-        # SN with icon
+        # SN with icon to left
         if sn_symbol:
-            c.drawImage(sn_symbol, C1 - 40 * mm, right_y - lot_icon_size/2,
+            c.drawImage(sn_symbol, icon_x, right_y - lot_icon_size/2,
                        width=lot_icon_size, height=lot_icon_size,
                        preserveAspectRatio=True, mask="auto")
         c.setFont("Helvetica", 17)
-        c.drawString(C1, right_y, f"(21){serial}")
+        c.drawString(data_value_x, right_y, f"(21){serial}")
 
         # === QR CODE - right aligned to R1 ===
         qr_size = 85 * mm
