@@ -140,10 +140,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             )
 
         if md_symbol:
-            md_size = symbol_size * 1.25  # Scale to 125% (20mm × 1.25 = 25mm)
+            md_size = symbol_size * 1.25 * 1.25  # Scale to 125% of current (20mm × 1.5625 = 31.25mm)
             c.drawImage(
                 md_symbol,
-                V6 - symbol_size * 2 - 5 * mm,  # Keep same anchor point
+                V6 - symbol_size * 2 - 5 * mm - 5,  # Move 5pt left from anchor
                 symbol_y,
                 width=md_size,
                 height=md_size,
@@ -197,14 +197,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         y -= 12 * mm
 
         icon_size = 18 * mm
-        # CORRECTION 4: Manufacturer logo and text moved RIGHT 57pt total (previous 37pt + 20pt)
-        manufacturer_x_offset = 57  # 57pt total right movement
+        # CORRECTION 4: Manufacturer logo and text moved RIGHT 62pt total (previous 57pt + 5pt)
+        manufacturer_x_offset = 62  # 62pt total right movement
         text_x = V1 + icon_size + 8 * mm + manufacturer_x_offset
 
         if manufacturer_symbol:
             c.drawImage(
                 manufacturer_symbol,
-                V1 + manufacturer_x_offset,  # 57pt right
+                V1 + manufacturer_x_offset,  # 62pt right
                 y - icon_size + 4,
                 width=icon_size,
                 height=icon_size,
@@ -222,17 +222,16 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block moved UP 2mm
         y -= 12 * mm
 
-        # CORRECTION 3: EC REP symbol scaled to 75% of current size
-        # Previous size: 54.6875mm
-        # New size: 54.6875mm × 0.75 = 41.015625mm
-        ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25 * 0.75  # 75% of current = 41.015625mm
-        ec_y_offset = 25  # 25pt up movement (unchanged)
+        # CORRECTION 5: EC REP symbol moved UP 35pt total (previous 25pt + 10pt)
+        # Size: 75% of previous = 41.015625mm (unchanged)
+        ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25 * 0.75  # 41.015625mm
+        ec_y_offset = 35  # 35pt total up movement
 
         if ec_rep_symbol:
             c.drawImage(
                 ec_rep_symbol,
                 V1,
-                y - ec_icon_size + 4 + ec_y_offset,  # 25pt up
+                y - ec_icon_size + 4 + ec_y_offset,  # 35pt up
                 width=ec_icon_size,
                 height=ec_icon_size,
                 preserveAspectRatio=True,
@@ -253,11 +252,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y = HEADER_BOTTOM - 8 * mm
 
-        # CORRECTION 2: GTIN, LOT, SN entire block moved RIGHT 20pt more
-        # Text values: 35pt + 20pt = 55pt total
-        # Labels and icons: 0pt + 20pt = 20pt total
-        text_block_x_offset = 55  # 55pt total right movement for values
-        label_icon_x_offset = 20  # 20pt right movement for labels and icons
+        # CORRECTION 2 & 3: GTIN, LOT, SN block with separate movements
+        # Numeric values: previous 55pt + 10pt = 65pt total
+        # Labels and icons: previous 20pt + 20pt = 40pt total
+        text_block_x_offset = 65  # 65pt total right movement for numeric values
+        label_icon_x_offset = 40  # 40pt total right movement for labels and icons
 
         c.setFont("Helvetica-Bold", 20)
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
@@ -267,13 +266,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y -= 14 * mm
 
-        # LOT icon moved UP 11pt total and RIGHT 20pt
+        # LOT icon moved UP 11pt total and RIGHT 40pt total
         lot_icon_y_offset = 11  # 11pt total up movement
 
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
-                V3 + label_icon_x_offset,  # 20pt right
+                V3 + label_icon_x_offset,  # 40pt right
                 right_y - 9.5 * mm + lot_icon_y_offset,  # 11pt up
                 width=16 * mm,
                 height=16 * mm,
@@ -285,11 +284,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y -= 14 * mm
 
-        # SN icon moved RIGHT 20pt
+        # SN icon moved RIGHT 40pt total
         if sn_symbol:
             c.drawImage(
                 sn_symbol,
-                V3 + label_icon_x_offset,  # 20pt right
+                V3 + label_icon_x_offset,  # 40pt right
                 right_y - 7 * mm,
                 width=16 * mm,
                 height=16 * mm,
