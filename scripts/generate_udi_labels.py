@@ -1,52 +1,381 @@
-# --- PAGE SETUP ---
-PAGE_WIDTH = 595.28
-PAGE_HEIGHT = 841.89
+#!/usr/bin/env python3
+"""
+UDI Label Generator for A4 Landscape
+Precision Grid System – Refined Alignment Pass
+"""
 
-# --- GLOBAL SHIFT (measured delta from original comparison) ---
-GLOBAL_X_SHIFT = -6.4    # move everything LEFT 6.4 pt
-GLOBAL_Y_SHIFT = -3.2    # move everything UP 3.2 pt
+import argparse
+import csv
+import os
+from io import BytesIO
+from PIL import Image
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+import qrcode
+import json
 
-
-# --- LOGO (kleinMed) ---
-logo_width = 92.0        # unchanged size
-logo_height = 28.0
-
-logo_x = 36.8 + GLOBAL_X_SHIFT
-logo_y = PAGE_HEIGHT - 64.5 + GLOBAL_Y_SHIFT
-
-
-# --- MANUFACTURER BLOCK ---
-manufacturer_x = 48.0 + GLOBAL_X_SHIFT
-manufacturer_y = PAGE_HEIGHT - 148.0 + GLOBAL_Y_SHIFT
-
-
-# --- UDI BLOCK ---
-udi_x = 334.5 + GLOBAL_X_SHIFT
-udi_y = PAGE_HEIGHT - 146.8 + GLOBAL_Y_SHIFT
+PAGE_WIDTH, PAGE_HEIGHT = landscape(A4)
 
 
-# --- CE MARK ---
-ce_x = 515.2 + GLOBAL_X_SHIFT
-ce_y = PAGE_HEIGHT - 140.0 + GLOBAL_Y_SHIFT
+# ==========================================================
+# VALIDATION
+# ==========================================================
+
+def validate_manufacturing_date(mfg_date):
+    if len(mfg_date) != 6 or not mfg_date.isdigit():
+        raise ValueError("Manufacturing date must be 6 digits (YYMMDD)")
+    month = int(mfg_date[2:4])
+    day = int(mfg_date[4:6])
+    if not (1 <= month <= 12):
+        raise ValueError("Invalid month")
+    if not (1 <= day <= 31):
+        raise ValueError("Invalid day")
+    return mfg_date
 
 
-# --- LOT / REF / SN TEXT AREA ---
-lot_block_x = 334.5 + GLOBAL_X_SHIFT
-lot_block_y = PAGE_HEIGHT - 196.0 + GLOBAL_Y_SHIFT
+def generate_udi_string(gtin, mfg_date, serial):
+    return f"(01){gtin}(11){mfg_date}(21){serial}"
 
 
-# --- QR CODE ---
-qr_size = 118.0
+def generate_qr_code(data, target_px):
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white").convert("L")
+    img = img.resize((target_px, target_px), Image.Resampling.LANCZOS)
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return ImageReader(buf)
 
-qr_x = 46.0 + GLOBAL_X_SHIFT
-qr_y = PAGE_HEIGHT - 310.0 + GLOBAL_Y_SHIFT
+
+def load_image_safe(path):
+    if os.path.exists(path):
+        return ImageReader(path)
+    return None
 
 
-# --- PRODUCT TITLE ---
-title_x = 46.0 + GLOBAL_X_SHIFT
-title_y = PAGE_HEIGHT - 236.5 + GLOBAL_Y_SHIFT
+# ==========================================================
+# MASTER LAYOUT
+# ==========================================================
+
+def create_label_pdf(product, mfg_date, serial_start, count, output_file):
+
+    c = canvas.Canvas(output_file, pagesize=landscape(A4))
+
+    # --- MASTER GRID ---
+    MARGIN_LEFT = 18 * mm
+    MARGIN_RIGHT = 18 * mm
+    MARGIN_TOP = 18 * mm
+    MARGIN_BOTTOM = 18 * mm
+
+    # Structural vertical rails
+    V1 = MARGIN_LEFT                     # Left text rail
+    V3 = PAGE_WIDTH * 0.60 - 4 * mm      # Data label rail (moved LEFT 4mm)
+    V4 = V3 + 24 * mm                    # Data value rail (moved RIGHT ~5mm net)
+    V6 = PAGE_WIDTH - MARGIN_RIGHT       # Right page rail
+
+    HEADER_TOP = PAGE_HEIGHT - MARGIN_TOP
+    HEADER_BOTTOM = HEADER_TOP - 40 * mm
+
+    # Load assets
+    logo = load_image_safe("assets/2a82bf22-0bef-4cfb-830f-349f1fc793ef-1.png")
+    ce_mark = load_image_safe("assets/image2.png")
+    md_symbol = load_image_safe("assets/image3.png")
+    manufacturer_symbol = load_image_safe("assets/image6.png")
+    manufacturer_symbol_empty = load_image_safe("assets/image8.png")
+    ec_rep_symbol = load_image_safe("assets/image10.png")
+    sn_symbol = load_image_safe("assets/image12.png")
+    udi_symbol = load_image_safe("assets/image14.png")
+    spec_symbols = load_image_safe("assets/Screenshot 2026-01-28 100951.png")
+
+    for i in range(count):
+
+        if i > 0:
+            c.showPage()
+
+        serial = serial_start + i
+        udi_payload = generate_udi_string(product["gtin"], mfg_date, serial)
+
+        # ======================================================
+        # HEADER
+        # ======================================================
+
+        # Logo moved LEFT 3mm
+        if logo:
+            logo_w = 115 * mm
+            logo_h = 32 * mm
+            c.drawImage(
+                logo,
+                V1 - 3 * mm,
+                HEADER_TOP - logo_h,
+                width=logo_w,
+                height=logo_h,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+        symbol_size = 20 * mm
+        symbol_y = HEADER_TOP - symbol_size
+
+        # Increase spec-to-MD gap by 3mm
+        if spec_symbols:
+            spec_w = 85 * mm
+            spec_h = 20 * mm
+            c.drawImage(
+                spec_symbols,
+                V6 - spec_w - symbol_size * 2 - 13 * mm,
+                symbol_y,
+                width=spec_w,
+                height=spec_h,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+        if md_symbol:
+            c.drawImage(
+                md_symbol,
+                V6 - symbol_size * 2 - 5 * mm,
+                symbol_y,
+                width=symbol_size,
+                height=symbol_size,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+        if ce_mark:
+            # CE lowered 1mm
+            c.drawImage(
+                ce_mark,
+                V6 - symbol_size,
+                symbol_y - 1 * mm,
+                width=symbol_size,
+                height=symbol_size,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+        # ======================================================
+        # LEFT COLUMN
+        # ======================================================
+
+        y = HEADER_BOTTOM - 3.5 * mm  # Title moved UP 1.5mm
+
+        TITLE_SPACING = 8.2 * mm
+        BODY_SPACING = 6.2 * mm
+
+        c.setFont("Helvetica-Bold", 23)
+        c.drawString(V1, y, product["name_de"])
+        y -= TITLE_SPACING
+        c.drawString(V1, y, product["name_en"])
+        y -= TITLE_SPACING
+        c.drawString(V1, y, product["name_fr"])
+        y -= TITLE_SPACING
+        c.drawString(V1, y, product["name_it"])
+
+        # Reduce title/description gap by 2mm
+        y -= 12 * mm
+
+        c.setFont("Helvetica", 16)
+        c.drawString(V1, y, product["description_de"][:100])
+        y -= BODY_SPACING
+        c.drawString(V1, y, product["description_en"][:100])
+        y -= BODY_SPACING
+        c.drawString(V1, y, product["description_fr"][:100])
+        y -= BODY_SPACING
+        c.drawString(V1, y, product["description_it"][:100])
+
+        # Manufacturer block moved UP 2mm
+        y -= 12 * mm
+
+        icon_size = 18 * mm
+        text_x = V1 + icon_size + 8 * mm  # Increased icon spacing by 3mm
+
+        if manufacturer_symbol:
+            c.drawImage(
+                manufacturer_symbol,
+                V1,
+                y - icon_size + 4,
+                width=icon_size,
+                height=icon_size,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+        c.setFont("Helvetica", 15)
+        c.drawString(text_x, y, product["manufacturer"]["name"])
+        y -= BODY_SPACING
+        c.drawString(text_x, y, product["manufacturer"]["address_line1"])
+        y -= BODY_SPACING
+        c.drawString(text_x, y, product["manufacturer"]["address_line2"])
+
+        # EC REP block moved UP 2mm
+        y -= 12 * mm
+
+        ec_icon_size = 28 * mm  # reduced width by 2mm
+
+        if ec_rep_symbol:
+            c.drawImage(
+                ec_rep_symbol,
+                V1,
+                y - ec_icon_size + 4,
+                width=ec_icon_size,
+                height=ec_icon_size,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+        ec_text_x = V1 + ec_icon_size + 8 * mm
+
+        c.drawString(ec_text_x, y, product["distributor"]["name"])
+        y -= BODY_SPACING
+        c.drawString(ec_text_x, y, product["distributor"]["address_line1"])
+        y -= BODY_SPACING
+        c.drawString(ec_text_x, y, product["distributor"]["address_line2"])
+
+        # ======================================================
+        # RIGHT COLUMN
+        # ======================================================
+
+        right_y = HEADER_BOTTOM - 8 * mm
+
+        c.setFont("Helvetica-Bold", 20)
+        c.drawString(V3, right_y, "GTIN")
+
+        c.setFont("Helvetica", 17)
+        c.drawString(V4, right_y, f"(01){product['gtin']}")
+
+        right_y -= 14 * mm
+
+        # LOT icon slightly lowered 1.5mm
+        if manufacturer_symbol_empty:
+            c.drawImage(
+                manufacturer_symbol_empty,
+                V3,
+                right_y - 9.5 * mm,
+                width=16 * mm,
+                height=16 * mm,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+        c.drawString(V4, right_y, f"(11){mfg_date}")
+
+        right_y -= 14 * mm
+
+        # SN icon raised 1mm
+        if sn_symbol:
+            c.drawImage(
+                sn_symbol,
+                V3,
+                right_y - 7 * mm,
+                width=16 * mm,
+                height=16 * mm,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+        c.drawString(V4, right_y, f"(21){serial}")
+
+        # ======================================================
+        # QR + UDI
+        # ======================================================
+
+        qr_size = 85 * mm
+        qr_size_px = int(qr_size * 4)
+
+        qr_img = generate_qr_code(udi_payload, qr_size_px)
+
+        qr_x = V6 - qr_size
+        qr_y = MARGIN_BOTTOM + 3 * mm  # QR moved UP 3mm
+
+        c.drawImage(qr_img, qr_x, qr_y, width=qr_size, height=qr_size)
+
+        if udi_symbol:
+            udi_size = 26 * mm
+            c.drawImage(
+                udi_symbol,
+                qr_x - udi_size - 11 * mm,  # moved LEFT 3mm
+                qr_y + (qr_size - udi_size) / 2 + 2 * mm,  # moved UP 2mm
+                width=udi_size,
+                height=udi_size,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+    c.save()
+    print(f"✓ PDF created: {output_file}")
 
 
-# --- BOTTOM ADDRESS BLOCK ---
-bottom_block_x = 46.0 + GLOBAL_X_SHIFT
-bottom_block_y = PAGE_HEIGHT - 420.0 + GLOBAL_Y_SHIFT
+# ==========================================================
+# CSV
+# ==========================================================
+
+def create_csv_file(product, mfg_date, serial_start, count, output_file):
+    with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+
+        writer.writerow([
+            "AI - GTIN", "Artikelnummer/GTIN", "Name", "Grund-einheit", "SN/LOT",
+            "Kurztext I", "Warengruppe", "AI - Herstelldatum", "Herstelldatum",
+            "AI - SN", "Seriennummer", "UDI", "GTIN-Etikett",
+            "Herstelldatum-Ettkett", "Seriennummer-Etikett", "QR", "QR-Code"
+        ])
+
+        for i in range(count):
+            serial = serial_start + i
+            udi = generate_udi_string(product["gtin"], mfg_date, serial)
+            qr_url = f"https://image-charts.com/chart?cht=qr&chs=250x250&chl={udi}"
+
+            writer.writerow([
+                "(01)", product["gtin"], product["name_de"],
+                product["grundeinheit"], product["sn_lot_type"],
+                product["kurztext"], product["warengruppe"],
+                "(11)", mfg_date, "(21)", serial, udi,
+                f"(01){product['gtin']}",
+                f"(11){mfg_date}",
+                f"(21){serial}",
+                udi,
+                qr_url
+            ])
+
+    print(f"✓ CSV created: {output_file}")
+
+
+# ==========================================================
+# MAIN
+# ==========================================================
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--product-json", required=True)
+    parser.add_argument("--mfg-date", required=True)
+    parser.add_argument("--serial-start", type=int, required=True)
+    parser.add_argument("--count", type=int, required=True)
+
+    args = parser.parse_args()
+
+    validate_manufacturing_date(args.mfg_date)
+    product = json.loads(args.product_json)
+
+    os.makedirs("output", exist_ok=True)
+
+    safe_name = product["name_de"].replace(" ", "_")[:30]
+    base_filename = f"UDI_Label_{safe_name}_{args.serial_start}-{args.serial_start + args.count - 1}"
+
+    pdf_file = f"output/{base_filename}.pdf"
+    csv_file = f"output/{base_filename}.csv"
+
+    create_label_pdf(product, args.mfg_date, args.serial_start, args.count, pdf_file)
+    create_csv_file(product, args.mfg_date, args.serial_start, args.count, csv_file)
+
+
+if __name__ == "__main__":
+    main()
