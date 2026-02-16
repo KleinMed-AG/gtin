@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 UDI Label Generator for A4 Landscape
-Precision Grid System – Refined Alignment Pass
+Precision Grid System – Final Alignment Pass
 """
 
 import argparse
@@ -108,13 +108,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # HEADER
         # ======================================================
 
-        # Logo moved LEFT 3mm
+        # CORRECTION 1: Logo moved LEFT 15pt (total: 3mm + 15pt)
         if logo:
             logo_w = 115 * mm
             logo_h = 32 * mm
             c.drawImage(
                 logo,
-                V1 - 3 * mm,
+                V1 - 3 * mm - 15,  # 15pt additional left movement
                 HEADER_TOP - logo_h,
                 width=logo_w,
                 height=logo_h,
@@ -196,12 +196,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         y -= 12 * mm
 
         icon_size = 18 * mm
-        text_x = V1 + icon_size + 8 * mm  # Increased icon spacing by 3mm
+        # CORRECTION 4: Manufacturer logo and text moved RIGHT 7pt
+        manufacturer_x_offset = 7  # 7pt right movement
+        text_x = V1 + icon_size + 8 * mm + manufacturer_x_offset
 
         if manufacturer_symbol:
             c.drawImage(
                 manufacturer_symbol,
-                V1,
+                V1 + manufacturer_x_offset,  # 7pt right
                 y - icon_size + 4,
                 width=icon_size,
                 height=icon_size,
@@ -219,13 +221,15 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block moved UP 2mm
         y -= 12 * mm
 
-        ec_icon_size = 28 * mm  # reduced width by 2mm
+        # CORRECTION 5: EC REP symbol moved UP 5pt and scaled to 125%
+        ec_icon_size = 28 * mm * 1.25  # 125% scale (28mm * 1.25 = 35mm)
+        ec_y_offset = 5  # 5pt up movement
 
         if ec_rep_symbol:
             c.drawImage(
                 ec_rep_symbol,
                 V1,
-                y - ec_icon_size + 4,
+                y - ec_icon_size + 4 + ec_y_offset,  # 5pt up
                 width=ec_icon_size,
                 height=ec_icon_size,
                 preserveAspectRatio=True,
@@ -246,27 +250,32 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y = HEADER_BOTTOM - 8 * mm
 
+        # CORRECTION 2: GTIN, LOT, SN text blocks moved RIGHT 5pt
+        text_block_x_offset = 5  # 5pt right movement
+
         c.setFont("Helvetica-Bold", 20)
         c.drawString(V3, right_y, "GTIN")
 
         c.setFont("Helvetica", 17)
-        c.drawString(V4, right_y, f"(01){product['gtin']}")
+        c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
 
         right_y -= 14 * mm
 
-        # LOT icon slightly lowered 1.5mm
+        # CORRECTION 3: LOT icon moved UP 3pt
+        lot_icon_y_offset = 3  # 3pt up movement
+
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
                 V3,
-                right_y - 9.5 * mm,
+                right_y - 9.5 * mm + lot_icon_y_offset,  # 3pt up
                 width=16 * mm,
                 height=16 * mm,
                 preserveAspectRatio=True,
                 mask="auto"
             )
 
-        c.drawString(V4, right_y, f"(11){mfg_date}")
+        c.drawString(V4 + text_block_x_offset, right_y, f"(11){mfg_date}")
 
         right_y -= 14 * mm
 
@@ -282,7 +291,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                 mask="auto"
             )
 
-        c.drawString(V4, right_y, f"(21){serial}")
+        c.drawString(V4 + text_block_x_offset, right_y, f"(21){serial}")
 
         # ======================================================
         # QR + UDI
