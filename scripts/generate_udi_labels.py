@@ -91,9 +91,12 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     left_margin = 15 * mm
     right_margin = 15 * mm
     
+    # ABSOLUTE CORRECTIONS APPLIED
+    global_left_column_offset = -2.5  # Move entire text column LEFT -2.5pt
+    
     # 1️⃣ Primary Left Vertical Anchor (L1)
     # ALL left text content aligns here
-    L1 = left_margin
+    L1 = left_margin + global_left_column_offset
     
     # 2️⃣ Icon Alignment Line (L2)  
     # Factory icon and EC REP box align here
@@ -132,11 +135,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                        width=logo_w, height=logo_h,
                        preserveAspectRatio=True, mask="auto")
         
-        # Symbol row - right aligned, with corrections
+        # Symbol row - right aligned, ABSOLUTE CORRECTION: UP -1.5pt
         symbol_size = 22 * mm
-        symbol_y_offset = -0.5  # Correction: UP -0.5pt
-        symbol_x_offset = -1  # Correction: LEFT -1pt
-        symbol_y = y_pos + symbol_y_offset
+        header_symbol_y_offset = -1.5  # ABSOLUTE: UP -1.5pt
+        symbol_y = y_pos + header_symbol_y_offset
+        symbol_x_offset = -1  # Previous correction
         
         # CE mark (rightmost, aligned to R1)
         ce_x = R1 - symbol_size + symbol_x_offset
@@ -205,8 +208,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         mfr_icon_size = 18 * mm
         # Text position
         mfr_text_x = L1 + mfr_x_offset
+        # ABSOLUTE CORRECTION: Factory icon RIGHT +4pt
+        factory_icon_offset = 4  # ABSOLUTE: RIGHT +4pt
         # Icon immediately to the left of text (reduced gap)
-        mfr_icon_x = mfr_text_x - mfr_icon_size - 2 * mm
+        mfr_icon_x = mfr_text_x - mfr_icon_size - 2 * mm + factory_icon_offset
         
         # Factory icon - immediately to left of text
         if manufacturer_symbol:
@@ -232,8 +237,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         ec_icon_size = 36 * mm
         # Text aligned with manufacturer + correction
         ec_text_x = mfr_text_x + ec_x_offset
+        # ABSOLUTE CORRECTION: EC REP box RIGHT +5.5pt
+        ec_rep_icon_offset = 5.5  # ABSOLUTE: RIGHT +5.5pt
         # Icon immediately to the left of text (reduced gap)
-        ec_icon_x = ec_text_x - ec_icon_size - 2 * mm
+        ec_icon_x = ec_text_x - ec_icon_size - 2 * mm + ec_rep_icon_offset
         
         # EC REP box - immediately to left of text
         if ec_rep_symbol:
@@ -266,8 +273,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         
         right_spacing = 13 * mm + 4  # Original 13mm + 4pt increase
         
+        # ABSOLUTE CORRECTION: Right data column LEFT -8pt
+        right_data_column_offset = -8  # ABSOLUTE: LEFT -8pt
+        
         # Numbers position
-        data_value_x = C1 + 15 + block_x_offset  # C1 + previous 15pt + block offset
+        data_value_x = C1 + 15 + block_x_offset + right_data_column_offset  # Apply absolute correction
         # Icons to the left with reduced gap
         icon_gap = 3 * mm  # Reduced gap between icon and number
         icon_x = data_value_x - 42 * mm  # Adjusted for reduced gap
@@ -279,30 +289,37 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(data_value_x, right_y, f"(01){product['gtin']}")
         right_y -= right_spacing  # Increased spacing
         
-        # LOT with icon to left (reduced gap)
+        # ABSOLUTE CORRECTION: Date + SN icon column RIGHT +9pt
+        date_sn_icon_offset = 9  # ABSOLUTE: RIGHT +9pt
+        
+        # LOT with icon to left (reduced gap) + ABSOLUTE correction
         lot_icon_size = 17 * mm
         if manufacturer_symbol_empty:
-            c.drawImage(manufacturer_symbol_empty, icon_x, right_y - lot_icon_size/2,
+            c.drawImage(manufacturer_symbol_empty, icon_x + date_sn_icon_offset, right_y - lot_icon_size/2,
                        width=lot_icon_size, height=lot_icon_size,
                        preserveAspectRatio=True, mask="auto")
         c.setFont("Helvetica", 17)
         c.drawString(data_value_x, right_y, f"(11){mfg_date}")
         right_y -= right_spacing  # Increased spacing
         
-        # SN with icon to left (reduced gap)
+        # SN with icon to left (reduced gap) + ABSOLUTE correction
         sn_x_offset = 1.5  # Correction: RIGHT +1.5pt
         sn_y_offset = 2.5  # Correction: DOWN +2.5pt
         
         if sn_symbol:
-            c.drawImage(sn_symbol, icon_x + sn_x_offset, right_y - lot_icon_size/2 - sn_y_offset,
+            c.drawImage(sn_symbol, icon_x + date_sn_icon_offset + sn_x_offset, right_y - lot_icon_size/2 - sn_y_offset,
                        width=lot_icon_size, height=lot_icon_size,
                        preserveAspectRatio=True, mask="auto")
         c.setFont("Helvetica", 17)
         c.drawString(data_value_x + sn_x_offset, right_y - sn_y_offset, f"(21){serial}")
 
         # === QR CODE - right aligned to R1 ===
-        qr_x_offset = 2.5  # Correction: RIGHT +2.5pt
-        qr_y_offset = -1.5  # Correction: UP -1.5pt
+        # ABSOLUTE CORRECTIONS: RIGHT +8pt, UP -10pt
+        qr_x_absolute_offset = 8  # ABSOLUTE: RIGHT +8pt
+        qr_y_absolute_offset = -10  # ABSOLUTE: UP -10pt
+        
+        qr_x_offset = 2.5 + qr_x_absolute_offset  # Previous +2.5pt + absolute +8pt
+        qr_y_offset = -1.5 + qr_y_absolute_offset  # Previous -1.5pt + absolute -10pt
         
         qr_size = 85 * mm
         qr_size_px = int(qr_size * 4)
@@ -313,8 +330,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawImage(qr_img, qr_x, qr_y,
                    width=qr_size, height=qr_size)
         
+        # ABSOLUTE CORRECTION: UDI box RIGHT +6.5pt
+        udi_x_absolute_offset = 6.5  # ABSOLUTE: RIGHT +6.5pt
+        
         # UDI icon - to left of QR with corrections
-        udi_x_offset = 2  # Correction: RIGHT +2pt
+        udi_x_offset = 2 + udi_x_absolute_offset  # Previous +2pt + absolute +6.5pt
         udi_y_offset = -1  # Correction: UP -1pt
         
         if udi_symbol:
