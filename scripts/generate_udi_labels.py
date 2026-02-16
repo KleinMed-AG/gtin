@@ -140,12 +140,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             )
 
         if md_symbol:
+            md_size = symbol_size * 1.25  # Scale to 125% (20mm × 1.25 = 25mm)
             c.drawImage(
                 md_symbol,
-                V6 - symbol_size * 2 - 5 * mm,
+                V6 - symbol_size * 2 - 5 * mm,  # Keep same anchor point
                 symbol_y,
-                width=symbol_size,
-                height=symbol_size,
+                width=md_size,
+                height=md_size,
                 preserveAspectRatio=True,
                 mask="auto"
             )
@@ -196,14 +197,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         y -= 12 * mm
 
         icon_size = 18 * mm
-        # CORRECTION 4: Manufacturer logo and text moved RIGHT 37pt total (previous 22pt + 15pt)
-        manufacturer_x_offset = 37  # 37pt total right movement
+        # CORRECTION 4: Manufacturer logo and text moved RIGHT 57pt total (previous 37pt + 20pt)
+        manufacturer_x_offset = 57  # 57pt total right movement
         text_x = V1 + icon_size + 8 * mm + manufacturer_x_offset
 
         if manufacturer_symbol:
             c.drawImage(
                 manufacturer_symbol,
-                V1 + manufacturer_x_offset,  # 37pt right
+                V1 + manufacturer_x_offset,  # 57pt right
                 y - icon_size + 4,
                 width=icon_size,
                 height=icon_size,
@@ -221,11 +222,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block moved UP 2mm
         y -= 12 * mm
 
-        # CORRECTION 5: EC REP symbol moved UP 25pt total (previous 15pt + 10pt) and scaled to 125% of current size
-        # Previous size: 43.75mm
-        # New size: 43.75mm * 1.25 = 54.6875mm
-        ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25  # 125% of current = 54.6875mm
-        ec_y_offset = 25  # 25pt total up movement
+        # CORRECTION 3: EC REP symbol scaled to 75% of current size
+        # Previous size: 54.6875mm
+        # New size: 54.6875mm × 0.75 = 41.015625mm
+        ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25 * 0.75  # 75% of current = 41.015625mm
+        ec_y_offset = 25  # 25pt up movement (unchanged)
 
         if ec_rep_symbol:
             c.drawImage(
@@ -252,24 +253,27 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y = HEADER_BOTTOM - 8 * mm
 
-        # CORRECTION 2: GTIN, LOT, SN text blocks moved RIGHT 35pt total (previous 20pt + 15pt)
-        text_block_x_offset = 35  # 35pt total right movement
+        # CORRECTION 2: GTIN, LOT, SN entire block moved RIGHT 20pt more
+        # Text values: 35pt + 20pt = 55pt total
+        # Labels and icons: 0pt + 20pt = 20pt total
+        text_block_x_offset = 55  # 55pt total right movement for values
+        label_icon_x_offset = 20  # 20pt right movement for labels and icons
 
         c.setFont("Helvetica-Bold", 20)
-        c.drawString(V3, right_y, "GTIN")
+        c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
 
         c.setFont("Helvetica", 17)
         c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
 
         right_y -= 14 * mm
 
-        # CORRECTION 3: LOT icon moved UP 11pt total (previous 8pt + 3pt)
+        # LOT icon moved UP 11pt total and RIGHT 20pt
         lot_icon_y_offset = 11  # 11pt total up movement
 
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
-                V3,
+                V3 + label_icon_x_offset,  # 20pt right
                 right_y - 9.5 * mm + lot_icon_y_offset,  # 11pt up
                 width=16 * mm,
                 height=16 * mm,
@@ -281,11 +285,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y -= 14 * mm
 
-        # SN icon raised 1mm
+        # SN icon moved RIGHT 20pt
         if sn_symbol:
             c.drawImage(
                 sn_symbol,
-                V3,
+                V3 + label_icon_x_offset,  # 20pt right
                 right_y - 7 * mm,
                 width=16 * mm,
                 height=16 * mm,
