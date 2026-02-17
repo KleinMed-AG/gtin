@@ -140,11 +140,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             )
 
         if md_symbol:
-            md_size = symbol_size * 1.25 * 1.25 * 0.95  # Scale to 95% of current (31.25mm × 0.95 = 29.6875mm)
+            md_size = symbol_size * 1.25 * 1.25 * 0.95  # 29.6875mm (unchanged)
             c.drawImage(
                 md_symbol,
-                V6 - symbol_size * 2 - 5 * mm - 5 - 10,  # Previous -5pt, now -15pt left total
-                symbol_y - 5,  # Move 5pt down
+                V6 - symbol_size * 2 - 5 * mm - 20,  # -5pt -10pt -5pt = -20pt left total
+                symbol_y - 5 - 3,  # Previous -5pt, now -8pt down total
                 width=md_size,
                 height=md_size,
                 preserveAspectRatio=True,
@@ -213,11 +213,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             )
 
         c.setFont("Helvetica", 15)
-        c.drawString(text_x, y, product["manufacturer"]["name"])
+        # CORRECTION 2: KleinMed AG text moved 3pt down (icon unchanged)
+        mfr_text_y_offset = -3  # 3pt down
+        c.drawString(text_x, y + mfr_text_y_offset, product["manufacturer"]["name"])
         y -= BODY_SPACING
-        c.drawString(text_x, y, product["manufacturer"]["address_line1"])
+        c.drawString(text_x, y + mfr_text_y_offset, product["manufacturer"]["address_line1"])
         y -= BODY_SPACING
-        c.drawString(text_x, y, product["manufacturer"]["address_line2"])
+        c.drawString(text_x, y + mfr_text_y_offset, product["manufacturer"]["address_line2"])
 
         # EC REP block moved UP 2mm
         y -= 12 * mm
@@ -255,11 +257,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y = HEADER_BOTTOM - 8 * mm
 
-        # CORRECTION 2: GTIN, LOT, SN logos/icons moved RIGHT 15pt more
-        # Numeric values: 65pt (unchanged)
-        # Labels and icons: previous 40pt + 15pt = 55pt total
-        text_block_x_offset = 65  # 65pt total right movement for numeric values (unchanged)
-        label_icon_x_offset = 55  # 55pt total right movement for labels and icons
+        # CORRECTIONS 3 & 4: GTIN/LOT/SN block
+        # Icons/labels: 55pt + 5pt = 60pt total
+        # Numeric values: 65pt + 3pt = 68pt total
+        text_block_x_offset = 68  # 68pt total for numeric values
+        label_icon_x_offset = 60  # 60pt total for icons and labels
 
         c.setFont("Helvetica-Bold", 20)
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
@@ -269,13 +271,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y -= 14 * mm
 
-        # LOT icon moved UP 11pt total and RIGHT 55pt total
+        # LOT icon - UP 11pt total, RIGHT 60pt total
         lot_icon_y_offset = 11  # 11pt total up movement
 
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
-                V3 + label_icon_x_offset,  # 55pt right
+                V3 + label_icon_x_offset,  # 60pt right
                 right_y - 9.5 * mm + lot_icon_y_offset,  # 11pt up
                 width=16 * mm,
                 height=16 * mm,
@@ -287,11 +289,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y -= 14 * mm
 
-        # SN icon moved RIGHT 55pt total
+        # SN icon - RIGHT 60pt total
         if sn_symbol:
             c.drawImage(
                 sn_symbol,
-                V3 + label_icon_x_offset,  # 55pt right
+                V3 + label_icon_x_offset,  # 60pt right
                 right_y - 7 * mm,
                 width=16 * mm,
                 height=16 * mm,
