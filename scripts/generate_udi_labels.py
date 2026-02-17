@@ -143,8 +143,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             md_size = symbol_size * 1.25 * 1.25 * 0.95  # 29.6875mm (unchanged)
             c.drawImage(
                 md_symbol,
-                V6 - symbol_size * 2 - 5 * mm - 20,  # -5pt -10pt -5pt = -20pt left total
-                symbol_y - 5 - 3,  # Previous -5pt, now -8pt down total
+                V6 - symbol_size * 2 - 5 * mm - 30,  # -20pt - 10pt = -30pt left total
+                symbol_y - 5 - 3 - 7,  # -8pt - 7pt = -15pt down total
                 width=md_size,
                 height=md_size,
                 preserveAspectRatio=True,
@@ -213,8 +213,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             )
 
         c.setFont("Helvetica", 15)
-        # CORRECTION 2: KleinMed AG text moved 3pt down (icon unchanged)
-        mfr_text_y_offset = -3  # 3pt down
+        # CORRECTION 2: KleinMed AG text moved 10pt down total (-3pt - 7pt)
+        mfr_text_y_offset = -10  # 10pt down total
         c.drawString(text_x, y + mfr_text_y_offset, product["manufacturer"]["name"])
         y -= BODY_SPACING
         c.drawString(text_x, y + mfr_text_y_offset, product["manufacturer"]["address_line1"])
@@ -258,10 +258,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         right_y = HEADER_BOTTOM - 8 * mm
 
         # CORRECTIONS 3 & 4: GTIN/LOT/SN block
-        # Icons/labels: 55pt + 5pt = 60pt total
-        # Numeric values: 65pt + 3pt = 68pt total
-        text_block_x_offset = 68  # 68pt total for numeric values
-        label_icon_x_offset = 60  # 60pt total for icons and labels
+        # Icons/labels: 60pt + 15pt = 75pt total
+        # Numeric values: 68pt + 10pt = 78pt total
+        text_block_x_offset = 78  # 78pt total for numeric values
+        label_icon_x_offset = 75  # 75pt total for icons and labels
 
         c.setFont("Helvetica-Bold", 20)
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
@@ -271,13 +271,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y -= 14 * mm
 
-        # LOT icon - UP 11pt total, RIGHT 60pt total
+        # LOT icon - UP 11pt total, RIGHT 75pt total
         lot_icon_y_offset = 11  # 11pt total up movement
 
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
-                V3 + label_icon_x_offset,  # 60pt right
+                V3 + label_icon_x_offset,  # 75pt right
                 right_y - 9.5 * mm + lot_icon_y_offset,  # 11pt up
                 width=16 * mm,
                 height=16 * mm,
@@ -289,11 +289,11 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y -= 14 * mm
 
-        # SN icon - RIGHT 60pt total
+        # SN icon - RIGHT 75pt total
         if sn_symbol:
             c.drawImage(
                 sn_symbol,
-                V3 + label_icon_x_offset,  # 60pt right
+                V3 + label_icon_x_offset,  # 75pt right
                 right_y - 7 * mm,
                 width=16 * mm,
                 height=16 * mm,
