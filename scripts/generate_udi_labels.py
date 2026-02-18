@@ -266,7 +266,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.setFont("Helvetica-Bold", 20)
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
 
-        c.setFont("Helvetica", 17)
+        # GTIN number scaled to 150% (17pt × 1.5 = 25.5pt)
+        c.setFont("Helvetica", 25.5)
         c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
 
         right_y -= 14 * mm
@@ -285,6 +286,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                 mask="auto"
             )
 
+        # LOT number scaled to 150% (17pt × 1.5 = 25.5pt)
+        c.setFont("Helvetica", 25.5)
         c.drawString(V4 + text_block_x_offset, right_y, f"(11){mfg_date}")
 
         right_y -= 14 * mm
@@ -301,6 +304,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                 mask="auto"
             )
 
+        # SN number scaled to 150% (17pt × 1.5 = 25.5pt)
+        c.setFont("Helvetica", 25.5)
         c.drawString(V4 + text_block_x_offset, right_y, f"(21){serial}")
 
         # ======================================================
