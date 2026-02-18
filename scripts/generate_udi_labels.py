@@ -71,11 +71,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     c = canvas.Canvas(output_file, pagesize=landscape(A4))
 
     # --- MASTER GRID ---
-    # All margins halved from 18mm to 9mm
-    MARGIN_LEFT = 9 * mm
-    MARGIN_RIGHT = 9 * mm
-    MARGIN_TOP = 9 * mm
-    MARGIN_BOTTOM = 9 * mm
+    MARGIN_LEFT = 18 * mm
+    MARGIN_RIGHT = 18 * mm
+    MARGIN_TOP = 18 * mm
+    MARGIN_BOTTOM = 18 * mm
 
     # Structural vertical rails
     V1 = MARGIN_LEFT                     # Left text rail
@@ -110,10 +109,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # ======================================================
 
         # CORRECTION 1: Logo moved LEFT 30pt total (previous 25pt + 5pt)
-        # SCALE: All images scaled to 125%
         if logo:
-            logo_w = 115 * mm * 1.25 * 1.25 * 1.25  # 224.609375mm (125% scale applied)
-            logo_h = 32 * mm * 1.25 * 1.25 * 1.25   # 62.5mm (125% scale applied)
+            logo_w = 115 * mm
+            logo_h = 32 * mm
             c.drawImage(
                 logo,
                 V1 - 3 * mm - 30,  # 30pt total left movement
@@ -124,13 +122,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                 mask="auto"
             )
 
-        symbol_size = 20 * mm * 1.25 * 1.25 * 1.25  # 39.0625mm (125% scale applied)
+        symbol_size = 20 * mm
         symbol_y = HEADER_TOP - symbol_size
 
         # Increase spec-to-MD gap by 3mm
         if spec_symbols:
-            spec_w = 85 * mm * 1.25 * 1.25 * 1.25  # 166.015625mm (125% scale applied)
-            spec_h = 20 * mm * 1.25 * 1.25 * 1.25  # 39.0625mm (125% scale applied)
+            spec_w = 85 * mm
+            spec_h = 20 * mm
             c.drawImage(
                 spec_symbols,
                 V6 - spec_w - symbol_size * 2 - 13 * mm,
@@ -142,7 +140,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             )
 
         if md_symbol:
-            md_size = symbol_size * 1.25 * 1.25 * 0.95 * 1.25  # 37.109375mm (125% scale applied)
+            md_size = symbol_size * 1.25 * 1.25 * 0.95  # 29.6875mm (unchanged)
             c.drawImage(
                 md_symbol,
                 V6 - symbol_size * 2 - 5 * mm - 30,  # -20pt - 10pt = -30pt left total
@@ -198,7 +196,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Manufacturer block moved UP 2mm
         y -= 12 * mm
 
-        icon_size = 18 * mm * 1.25  # 22.5mm (125% scale applied)
+        icon_size = 18 * mm
         # CORRECTION 3: Manufacturer logo and text moved RIGHT 63pt total (previous 62pt + 1pt)
         manufacturer_x_offset = 63  # 63pt total right movement
         text_x = V1 + icon_size + 8 * mm + manufacturer_x_offset
@@ -228,7 +226,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # CORRECTION 4: EC REP symbol moved UP 38pt total (previous 35pt + 3pt)
         # Size: 41.015625mm (unchanged)
-        ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25 * 0.75 * 1.25  # 51.26953125mm (125% scale applied)
+        ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25 * 0.75  # 41.015625mm
         ec_y_offset = 38  # 38pt total up movement
 
         if ec_rep_symbol:
@@ -268,53 +266,48 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.setFont("Helvetica-Bold", 20)
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
 
-        c.setFont("Helvetica", 25.5)  # 17pt × 1.5 = 25.5pt (150% scale)
+        c.setFont("Helvetica", 17)
         c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
 
         right_y -= 14 * mm
 
-        # LOT icon - UP 11pt total, RIGHT 75pt total, scaled 125%
+        # LOT icon - UP 11pt total, RIGHT 75pt total
         lot_icon_y_offset = 11  # 11pt total up movement
-        lot_icon_size = 16 * mm * 1.25  # 20mm (125% scale)
 
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
                 V3 + label_icon_x_offset,  # 75pt right
                 right_y - 9.5 * mm + lot_icon_y_offset,  # 11pt up
-                width=lot_icon_size,
-                height=lot_icon_size,
+                width=16 * mm,
+                height=16 * mm,
                 preserveAspectRatio=True,
                 mask="auto"
             )
 
-        c.setFont("Helvetica", 25.5)  # 17pt × 1.5 = 25.5pt (150% scale)
         c.drawString(V4 + text_block_x_offset, right_y, f"(11){mfg_date}")
 
         right_y -= 14 * mm
 
-        # SN icon - RIGHT 75pt total, scaled 125%
-        sn_icon_size = 16 * mm * 1.25  # 20mm (125% scale)
-        
+        # SN icon - RIGHT 75pt total
         if sn_symbol:
             c.drawImage(
                 sn_symbol,
                 V3 + label_icon_x_offset,  # 75pt right
                 right_y - 7 * mm,
-                width=sn_icon_size,
-                height=sn_icon_size,
+                width=16 * mm,
+                height=16 * mm,
                 preserveAspectRatio=True,
                 mask="auto"
             )
 
-        c.setFont("Helvetica", 25.5)  # 17pt × 1.5 = 25.5pt (150% scale)
         c.drawString(V4 + text_block_x_offset, right_y, f"(21){serial}")
 
         # ======================================================
         # QR + UDI
         # ======================================================
 
-        qr_size = 85 * mm * 1.25  # 106.25mm (125% scale)
+        qr_size = 85 * mm
         qr_size_px = int(qr_size * 4)
 
         qr_img = generate_qr_code(udi_payload, qr_size_px)
@@ -325,7 +318,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawImage(qr_img, qr_x, qr_y, width=qr_size, height=qr_size)
 
         if udi_symbol:
-            udi_size = 26 * mm * 1.25  # 32.5mm (125% scale)
+            udi_size = 26 * mm
             c.drawImage(
                 udi_symbol,
                 qr_x - udi_size - 11 * mm,  # moved LEFT 3mm
