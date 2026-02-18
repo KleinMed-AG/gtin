@@ -266,46 +266,44 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.setFont("Helvetica-Bold", 20)
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
 
-        # GTIN number scaled to 150% (17pt × 1.5 = 25.5pt)
-        c.setFont("Helvetica", 25.5)
+        c.setFont("Helvetica", 17)
         c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
 
         right_y -= 14 * mm
 
-        # LOT icon - UP 11pt total, RIGHT 75pt total
+        # LOT icon - UP 11pt total, RIGHT 75pt total, SCALED 150%
         lot_icon_y_offset = 11  # 11pt total up movement
+        lot_icon_size = 16 * mm * 1.5  # 24mm (150% scale: 16mm × 1.5)
 
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
                 V3 + label_icon_x_offset,  # 75pt right
                 right_y - 9.5 * mm + lot_icon_y_offset,  # 11pt up
-                width=16 * mm,
-                height=16 * mm,
+                width=lot_icon_size,
+                height=lot_icon_size,
                 preserveAspectRatio=True,
                 mask="auto"
             )
 
-        # LOT number scaled to 150% (17pt × 1.5 = 25.5pt)
-        c.setFont("Helvetica", 25.5)
         c.drawString(V4 + text_block_x_offset, right_y, f"(11){mfg_date}")
 
         right_y -= 14 * mm
 
-        # SN icon - RIGHT 75pt total
+        # SN icon - RIGHT 75pt total, SCALED 150%
+        sn_icon_size = 16 * mm * 1.5  # 24mm (150% scale: 16mm × 1.5)
+        
         if sn_symbol:
             c.drawImage(
                 sn_symbol,
                 V3 + label_icon_x_offset,  # 75pt right
                 right_y - 7 * mm,
-                width=16 * mm,
-                height=16 * mm,
+                width=sn_icon_size,
+                height=sn_icon_size,
                 preserveAspectRatio=True,
                 mask="auto"
             )
 
-        # SN number scaled to 150% (17pt × 1.5 = 25.5pt)
-        c.setFont("Helvetica", 25.5)
         c.drawString(V4 + text_block_x_offset, right_y, f"(21){serial}")
 
         # ======================================================
