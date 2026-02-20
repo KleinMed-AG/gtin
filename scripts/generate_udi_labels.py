@@ -205,7 +205,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.drawImage(
                 manufacturer_symbol,
                 V1 + manufacturer_x_offset,  # 66pt right
-                y - icon_size + 4,
+                y - icon_size + 4 + 3,  # moved UP 3pt
                 width=icon_size,
                 height=icon_size,
                 preserveAspectRatio=True,
@@ -226,13 +226,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # UPDATED: EC REP icon size increased by 15% (from 41.015625mm to 47.168mm)
         ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25 * 0.75 * 1.15  # 47.168mm
-        ec_y_offset = 38  # 38pt total up movement
+        ec_y_offset = 40  # 40pt total up movement (38pt + 2pt)
 
         if ec_rep_symbol:
             c.drawImage(
                 ec_rep_symbol,
                 V1,
-                y - ec_icon_size + 4 + ec_y_offset,  # 38pt up
+                y - ec_icon_size + 4 + ec_y_offset,  # 40pt up
                 width=ec_icon_size,
                 height=ec_icon_size,
                 preserveAspectRatio=True,
@@ -270,14 +270,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         right_y -= 14 * mm + 7  # Original 14mm + 7pt increase between GTIN and LOT
 
         # LOT icon - UP 11pt total, RIGHT 75pt total, SCALED 150%
-        lot_icon_y_offset = 11  # 11pt total up movement
+        lot_icon_y_offset = 8  # 8pt total up movement (11pt - 3pt down)
         lot_icon_size = 16 * mm * 1.5  # 24mm (150% scale: 16mm × 1.5)
 
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
                 V3 + label_icon_x_offset,  # 75pt right
-                right_y - 9.5 * mm + lot_icon_y_offset,  # 11pt up
+                right_y - 9.5 * mm + lot_icon_y_offset,  # 8pt up
                 width=lot_icon_size,
                 height=lot_icon_size,
                 preserveAspectRatio=True,
@@ -296,7 +296,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.drawImage(
                 sn_symbol,
                 V3 + label_icon_x_offset,  # 75pt right
-                right_y - 7 * mm,
+                right_y - 7 * mm - 7,  # moved DOWN 7pt
                 width=sn_icon_size,
                 height=sn_icon_size,
                 preserveAspectRatio=True,
@@ -314,8 +314,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         qr_img = generate_qr_code(udi_payload, qr_size_px)
 
-        qr_x = V6 - qr_size - 3 + 10  # moved 3pt left, then 10pt right (net 7pt right)
-        qr_y = MARGIN_BOTTOM + 3 * mm - 10 - 15 - 10  # QR moved UP 3mm, then DOWN 10pt, then DOWN 15pt, then DOWN 10pt
+        qr_x = V6 - qr_size - 3 + 10 + 5  # moved 3pt left, then 10pt right, then 5pt right (net 12pt right)
+        qr_y = MARGIN_BOTTOM + 3 * mm - 10 - 15 - 10 - 7  # QR moved UP 3mm, then DOWN 10pt, then DOWN 15pt, then DOWN 10pt, then DOWN 7pt
 
         c.drawImage(qr_img, qr_x, qr_y, width=qr_size, height=qr_size)
 
@@ -323,7 +323,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             udi_size = 26 * mm
             c.drawImage(
                 udi_symbol,
-                qr_x - udi_size - 11 * mm + 20,  # moved RIGHT 20pt total (5pt + 10pt + 5pt)
+                qr_x - udi_size - 11 * mm + 27,  # moved RIGHT 27pt total (5pt + 10pt + 5pt + 7pt)
                 qr_y + (qr_size - udi_size) / 2 + 2 * mm,  # moved UP 2mm (relative to QR position)
                 width=udi_size,
                 height=udi_size,
