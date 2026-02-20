@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 UDI Label Generator for A4 Landscape
-Precision Grid System – Final Alignment Pass
+Precision Grid System – Updated with requested adjustments
 """
 
 import argparse
@@ -90,7 +90,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
     ce_mark = load_image_safe("assets/image2.png")
     md_symbol = load_image_safe("assets/image3.png")
     manufacturer_symbol = load_image_safe("assets/image6.png")
-    manufacturer_symbol_empty = load_image_safe("assets/image8.png")
+    manufacturer_symbol_empty = load_image_safe("assets/image12.png")
     ec_rep_symbol = load_image_safe("assets/image10.png")
     sn_symbol = load_image_safe("assets/image12.png")
     udi_symbol = load_image_safe("assets/image14.png")
@@ -108,7 +108,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # HEADER
         # ======================================================
 
-        # CORRECTION 1: Logo moved LEFT 30pt total (previous 25pt + 5pt)
+        # Logo moved LEFT 30pt total (previous 25pt + 5pt)
         if logo:
             logo_w = 115 * mm
             logo_h = 32 * mm
@@ -196,8 +196,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # Manufacturer block moved UP 2mm
         y -= 12 * mm
 
-        icon_size = 18 * mm
-        # CORRECTION 3: Manufacturer logo and text moved RIGHT 63pt total (previous 62pt + 1pt)
+        # UPDATED: Manufacturer icon size increased by 15% (from 18mm to 20.7mm)
+        icon_size = 18 * mm * 1.15  # 20.7mm
         manufacturer_x_offset = 63  # 63pt total right movement
         text_x = V1 + icon_size + 8 * mm + manufacturer_x_offset
 
@@ -212,8 +212,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                 mask="auto"
             )
 
-        c.setFont("Helvetica", 15)
-        # CORRECTION 2: KleinMed AG text moved 10pt down total (-3pt - 7pt)
+        # UPDATED: Manufacturer text font size increased by 5pts (from 15pt to 20pt)
+        c.setFont("Helvetica", 20)
         mfr_text_y_offset = -10  # 10pt down total
         c.drawString(text_x, y + mfr_text_y_offset, product["manufacturer"]["name"])
         y -= BODY_SPACING
@@ -224,9 +224,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # EC REP block moved UP 2mm
         y -= 12 * mm
 
-        # CORRECTION 4: EC REP symbol moved UP 38pt total (previous 35pt + 3pt)
-        # Size: 41.015625mm (unchanged)
-        ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25 * 0.75  # 41.015625mm
+        # UPDATED: EC REP icon size increased by 15% (from 41.015625mm to 47.168mm)
+        ec_icon_size = 28 * mm * 1.25 * 1.25 * 1.25 * 0.75 * 1.15  # 47.168mm
         ec_y_offset = 38  # 38pt total up movement
 
         if ec_rep_symbol:
@@ -241,10 +240,10 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             )
 
         ec_text_x = V1 + ec_icon_size + 8 * mm
-        
-        # CORRECTION 5: EC REP text (Hälsa Pharma GmbH) moved 3pt DOWN
         ec_text_y_offset = -3  # 3pt down
 
+        # UPDATED: EC REP text font size increased by 5pts (from 15pt to 20pt)
+        c.setFont("Helvetica", 20)
         c.drawString(ec_text_x, y + ec_text_y_offset, product["distributor"]["name"])
         y -= BODY_SPACING
         c.drawString(ec_text_x, y + ec_text_y_offset, product["distributor"]["address_line1"])
@@ -257,9 +256,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         right_y = HEADER_BOTTOM - 8 * mm
 
-        # CORRECTIONS 3 & 4: GTIN/LOT/SN block
-        # Icons/labels: 60pt + 15pt = 75pt total
-        # Numeric values: 68pt + 10pt = 78pt total
+        # GTIN/LOT/SN block
         text_block_x_offset = 78  # 78pt total for numeric values
         label_icon_x_offset = 75  # 75pt total for icons and labels
 
@@ -269,7 +266,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.setFont("Helvetica", 17)
         c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
 
-        right_y -= 14 * mm + 10  # Original 14mm + 10pt increase between GTIN and LOT
+        # UPDATED: Vertical spacing increased by +5pts (from 10pt to 15pt)
+        right_y -= 14 * mm + 15  # Original 14mm + 15pt increase between GTIN and LOT
 
         # LOT icon - UP 11pt total, RIGHT 75pt total, SCALED 150%
         lot_icon_y_offset = 11  # 11pt total up movement
@@ -288,7 +286,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         c.drawString(V4 + text_block_x_offset, right_y - 5, f"(11){mfg_date}")  # -5pt between GTIN and LOT numbers
 
-        right_y -= 14 * mm + 10  # Original 14mm + 10pt increase between LOT and SN
+        # UPDATED: Vertical spacing increased by +5pts (from 10pt to 15pt)
+        right_y -= 14 * mm + 15  # Original 14mm + 15pt increase between LOT and SN
 
         # SN icon - RIGHT 75pt total, SCALED 150%
         sn_icon_size = 16 * mm * 1.5  # 24mm (150% scale: 16mm × 1.5)
