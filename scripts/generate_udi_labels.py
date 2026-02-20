@@ -263,13 +263,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         text_block_x_offset = 78  # 78pt total for numeric values
         label_icon_x_offset = 75  # 75pt total for icons and labels
 
-        c.setFont("Helvetica-Bold", 20)
+        c.setFont("Helvetica-Bold", 30)  # 20pt × 1.5 = 30pt (150% scale)
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
 
         c.setFont("Helvetica", 17)
         c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
 
-        right_y -= 14 * mm
+        right_y -= 14 * mm + 10  # Original 14mm + 10pt increase between GTIN and LOT
 
         # LOT icon - UP 11pt total, RIGHT 75pt total, SCALED 150%
         lot_icon_y_offset = 11  # 11pt total up movement
@@ -286,9 +286,9 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                 mask="auto"
             )
 
-        c.drawString(V4 + text_block_x_offset, right_y, f"(11){mfg_date}")
+        c.drawString(V4 + text_block_x_offset, right_y - 5, f"(11){mfg_date}")  # -5pt between GTIN and LOT numbers
 
-        right_y -= 14 * mm
+        right_y -= 14 * mm + 10  # Original 14mm + 10pt increase between LOT and SN
 
         # SN icon - RIGHT 75pt total, SCALED 150%
         sn_icon_size = 16 * mm * 1.5  # 24mm (150% scale: 16mm × 1.5)
@@ -304,7 +304,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
                 mask="auto"
             )
 
-        c.drawString(V4 + text_block_x_offset, right_y, f"(21){serial}")
+        c.drawString(V4 + text_block_x_offset, right_y - 5, f"(21){serial}")  # -5pt between LOT and SN numbers
 
         # ======================================================
         # QR + UDI
@@ -316,7 +316,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         qr_img = generate_qr_code(udi_payload, qr_size_px)
 
         qr_x = V6 - qr_size
-        qr_y = MARGIN_BOTTOM + 3 * mm  # QR moved UP 3mm
+        qr_y = MARGIN_BOTTOM + 3 * mm - 10  # QR moved UP 3mm, then DOWN 10pt
 
         c.drawImage(qr_img, qr_x, qr_y, width=qr_size, height=qr_size)
 
@@ -325,7 +325,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.drawImage(
                 udi_symbol,
                 qr_x - udi_size - 11 * mm,  # moved LEFT 3mm
-                qr_y + (qr_size - udi_size) / 2 + 2 * mm,  # moved UP 2mm
+                qr_y + (qr_size - udi_size) / 2 + 2 * mm,  # moved UP 2mm (relative to QR position)
                 width=udi_size,
                 height=udi_size,
                 preserveAspectRatio=True,
