@@ -198,14 +198,14 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # UPDATED: Manufacturer icon size increased by 15% (from 18mm to 20.7mm)
         icon_size = 18 * mm * 1.15  # 20.7mm
-        manufacturer_x_offset = 66  # 66pt total right movement (63pt + 3pt)
+        manufacturer_x_offset = 68  # 68pt total right movement (63pt + 3pt + 2pt)
         text_x = V1 + icon_size + 8 * mm + manufacturer_x_offset + 5  # moved 5pt right
 
         if manufacturer_symbol:
             c.drawImage(
                 manufacturer_symbol,
-                V1 + manufacturer_x_offset,  # 66pt right
-                y - icon_size + 4 + 3,  # moved UP 3pt
+                V1 + manufacturer_x_offset,  # 68pt right
+                y - icon_size + 4 + 4,  # moved UP 4pt total (3pt + 1pt)
                 width=icon_size,
                 height=icon_size,
                 preserveAspectRatio=True,
@@ -260,7 +260,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         text_block_x_offset = 75  # 75pt total for numeric values (moved 3pt left from 78pt)
         label_icon_x_offset = 69  # 69pt total for icons and labels (moved 6pt left total from 75pt: 72pt - 3pt)
 
-        c.setFont("Helvetica-Bold", 30)  # 20pt × 1.5 = 30pt (150% scale)
+        c.setFont("Helvetica-Bold", 28)  # 28pt (reduced by 2pt from 30pt)
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
 
         c.setFont("Helvetica", 17)
@@ -269,15 +269,15 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # UPDATED: Vertical spacing decreased by 5pts (from 12pt to 7pt)
         right_y -= 14 * mm + 7  # Original 14mm + 7pt increase between GTIN and LOT
 
-        # LOT icon - UP 11pt total, RIGHT 75pt total, SCALED 150%
-        lot_icon_y_offset = 8  # 8pt total up movement (11pt - 3pt down)
+        # LOT icon - UP 5pt total, RIGHT 75pt total, SCALED 150%
+        lot_icon_y_offset = 5  # 5pt total up movement (8pt - 3pt down)
         lot_icon_size = 16 * mm * 1.5  # 24mm (150% scale: 16mm × 1.5)
 
         if manufacturer_symbol_empty:
             c.drawImage(
                 manufacturer_symbol_empty,
                 V3 + label_icon_x_offset,  # 75pt right
-                right_y - 9.5 * mm + lot_icon_y_offset,  # 8pt up
+                right_y - 9.5 * mm + lot_icon_y_offset,  # 5pt up
                 width=lot_icon_size,
                 height=lot_icon_size,
                 preserveAspectRatio=True,
@@ -296,7 +296,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             c.drawImage(
                 sn_symbol,
                 V3 + label_icon_x_offset,  # 75pt right
-                right_y - 7 * mm - 7,  # moved DOWN 7pt
+                right_y - 7 * mm - 12,  # moved DOWN 12pt total (7pt + 5pt)
                 width=sn_icon_size,
                 height=sn_icon_size,
                 preserveAspectRatio=True,
@@ -314,7 +314,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         qr_img = generate_qr_code(udi_payload, qr_size_px)
 
-        qr_x = V6 - qr_size - 3 + 10 + 5  # moved 3pt left, then 10pt right, then 5pt right (net 12pt right)
+        qr_x = V6 - qr_size - 3 + 10 + 5 + 2  # moved 3pt left, then 10pt right, then 5pt right, then 2pt right (net 14pt right)
         qr_y = MARGIN_BOTTOM + 3 * mm - 10 - 15 - 10 - 7  # QR moved UP 3mm, then DOWN 10pt, then DOWN 15pt, then DOWN 10pt, then DOWN 7pt
 
         c.drawImage(qr_img, qr_x, qr_y, width=qr_size, height=qr_size)
@@ -323,7 +323,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             udi_size = 26 * mm
             c.drawImage(
                 udi_symbol,
-                qr_x - udi_size - 11 * mm + 27,  # moved RIGHT 27pt total (5pt + 10pt + 5pt + 7pt)
+                qr_x - udi_size - 11 * mm + 32,  # moved RIGHT 32pt total (5pt + 10pt + 5pt + 7pt + 5pt)
                 qr_y + (qr_size - udi_size) / 2 + 2 * mm,  # moved UP 2mm (relative to QR position)
                 width=udi_size,
                 height=udi_size,
