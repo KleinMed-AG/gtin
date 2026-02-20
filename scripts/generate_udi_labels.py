@@ -198,13 +198,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         # UPDATED: Manufacturer icon size increased by 15% (from 18mm to 20.7mm)
         icon_size = 18 * mm * 1.15  # 20.7mm
-        manufacturer_x_offset = 63  # 63pt total right movement
+        manufacturer_x_offset = 66  # 66pt total right movement (63pt + 3pt)
         text_x = V1 + icon_size + 8 * mm + manufacturer_x_offset + 5  # moved 5pt right
 
         if manufacturer_symbol:
             c.drawImage(
                 manufacturer_symbol,
-                V1 + manufacturer_x_offset,  # 63pt right
+                V1 + manufacturer_x_offset,  # 66pt right
                 y - icon_size + 4,
                 width=icon_size,
                 height=icon_size,
@@ -240,7 +240,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             )
 
         ec_text_x = V1 + ec_icon_size + 8 * mm
-        ec_text_y_offset = -10  # 3pt down + 7pt down = 10pt down total
+        ec_text_y_offset = -13  # 3pt down + 7pt down + 3pt down = 13pt down total
 
         # UPDATED: EC REP text font size increased by 5pts (from 15pt to 20pt)
         c.setFont("Helvetica", 20)
@@ -266,8 +266,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.setFont("Helvetica", 17)
         c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
 
-        # UPDATED: Vertical spacing increased by +5pts (from 10pt to 15pt)
-        right_y -= 14 * mm + 15  # Original 14mm + 15pt increase between GTIN and LOT
+        # UPDATED: Vertical spacing decreased by 3pts (from 15pt to 12pt)
+        right_y -= 14 * mm + 12  # Original 14mm + 12pt increase between GTIN and LOT
 
         # LOT icon - UP 11pt total, RIGHT 75pt total, SCALED 150%
         lot_icon_y_offset = 11  # 11pt total up movement
@@ -286,8 +286,8 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
 
         c.drawString(V4 + text_block_x_offset, right_y - 5, f"(11){mfg_date}")  # -5pt between GTIN and LOT numbers
 
-        # UPDATED: Vertical spacing increased by +5pts (from 10pt to 15pt)
-        right_y -= 14 * mm + 15  # Original 14mm + 15pt increase between LOT and SN
+        # UPDATED: Vertical spacing decreased by 3pts (from 15pt to 12pt)
+        right_y -= 14 * mm + 12  # Original 14mm + 12pt increase between LOT and SN
 
         # SN icon - RIGHT 75pt total, SCALED 150%
         sn_icon_size = 16 * mm * 1.5  # 24mm (150% scale: 16mm × 1.5)
@@ -309,13 +309,13 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         # QR + UDI
         # ======================================================
 
-        qr_size = 85 * mm * 1.25  # 106.25mm (125% of original 85mm)
+        qr_size = 85 * mm * 1.25 * 0.9  # 95.625mm (125% then reduced by 10%)
         qr_size_px = int(qr_size * 4)
 
         qr_img = generate_qr_code(udi_payload, qr_size_px)
 
         qr_x = V6 - qr_size - 3  # moved 3pt left
-        qr_y = MARGIN_BOTTOM + 3 * mm - 10  # QR moved UP 3mm, then DOWN 10pt
+        qr_y = MARGIN_BOTTOM + 3 * mm - 10 - 15  # QR moved UP 3mm, then DOWN 10pt, then DOWN 15pt
 
         c.drawImage(qr_img, qr_x, qr_y, width=qr_size, height=qr_size)
 
@@ -323,7 +323,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
             udi_size = 26 * mm
             c.drawImage(
                 udi_symbol,
-                qr_x - udi_size - 11 * mm + 5,  # moved RIGHT 5pt
+                qr_x - udi_size - 11 * mm + 15,  # moved RIGHT 15pt total (5pt + 10pt)
                 qr_y + (qr_size - udi_size) / 2 + 2 * mm,  # moved UP 2mm (relative to QR position)
                 width=udi_size,
                 height=udi_size,
