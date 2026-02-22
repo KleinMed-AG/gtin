@@ -264,7 +264,7 @@ def create_label_pdf(product, mfg_date, serial_start, count, output_file):
         c.drawString(V3 + label_icon_x_offset, right_y, "GTIN")
 
         c.setFont("Helvetica", 17)
-        c.drawString(V4 + text_block_x_offset, right_y, f"(01){product['gtin']}")
+        c.drawString(V4 + text_block_x_offset, right_y + 5, f"(01){product['gtin']}")  # moved UP 5pt
 
         # UPDATED: Vertical spacing decreased by 5pts (from 12pt to 7pt)
         right_y -= 14 * mm + 7  # Original 14mm + 7pt increase between GTIN and LOT
